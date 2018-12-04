@@ -1,0 +1,6 @@
+@import uk.gov.hmrc.ofstedformsproxy.config.AppConfig
+@()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+@main_template(title = "Hello from ofsted-forms-proxy", bodyClasses = None) {
+    <h1>Hello from ofsted-forms-proxy !</h1>
+}
