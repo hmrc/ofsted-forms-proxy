@@ -1,3 +1,4 @@
 # microservice specific routes
 
-GET        /hello-world             uk.gov.hmrc.ofstedformsproxy.controllers.HelloWorld.helloWorld
+
+POST    /send       uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormsProxyController.send()
