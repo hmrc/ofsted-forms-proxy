@@ -29,7 +29,7 @@ import uk.gov.hmrc.ofstedformsproxy.views
 
 //cygnumConnector : CygnumConnector)
 @Singleton
-class OfstedFormsProxyController @Inject()(val messagesApi: MessagesApi)  extends FrontendController with I18nSupport {
+class OfstedFormsProxyController @Inject()(val messagesApi: MessagesApi, cygnumConnector : CygnumConnector)  extends FrontendController with I18nSupport {
 
   implicit val ofstedCharset = Codec.utf_8
 
@@ -88,7 +88,7 @@ class OfstedFormsProxyController @Inject()(val messagesApi: MessagesApi)  extend
 //        case Some(_) => // make the request to cygnum
 //        case None =>  // report bad request and log the problem
 //      }
-
+      cygnumConnector.send()
       Ok("")
   }
 
