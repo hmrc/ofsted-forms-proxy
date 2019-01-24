@@ -17,28 +17,21 @@
 package uk.gov.hmrc.ofstedformsproxy.controllers
 
 import javax.inject.{Inject, Singleton}
-import play.api.mvc._
-
-import scala.concurrent.Future
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.filters.csrf.CSRFAddToken
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
-import uk.gov.hmrc.ofstedformsproxy.config.AppConfig
+import play.api.mvc._
+import scalaz.{-\/, \/-}
 import uk.gov.hmrc.ofstedformsproxy.connectors.CygnumConnector
-import uk.gov.hmrc.ofstedformsproxy.views
+import uk.gov.hmrc.ofstedformsproxy.models.{SubmissionFailure, SubmissionSuccess}
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-//cygnumConnector : CygnumConnector)
+//TODO: do not inject the connector here, inject the service class
 @Singleton
-class OfstedFormsProxyController @Inject()(val messagesApi: MessagesApi, cygnumConnector : CygnumConnector)  extends FrontendController with I18nSupport {
+class OfstedFormsProxyController @Inject()(val messagesApi: MessagesApi, cc: CygnumConnector) extends FrontendController with I18nSupport {
 
   implicit val ofstedCharset = Codec.utf_8
 
-  //TODO: Keystore
-  //TODO: Squid integration
-  //TODO: Construct SOAP Envelope
-  //TODO: Construct XML request
+  //TODO: need to handle different forms
   //TODO: Make request and evaluate response
-  //TODO: Add the CustomWsParser module
   //TODO: Add the AuthModule ???
   //TODO: Play Crypto Secret
   //TODO: Add Prod Router
@@ -47,9 +40,7 @@ class OfstedFormsProxyController @Inject()(val messagesApi: MessagesApi, cygnumC
   //TODO: Generate the timestamp values
   //TODO: set up kibana metrics
   //TODO: add cygnum connection configuration
-  //TODO: add squid configuration
   //TODO: set up routes
-
   //TODO: set up service manager configuration
   //TODO: set up app-base-config
   //TODO: set up app-common-config
@@ -57,39 +48,33 @@ class OfstedFormsProxyController @Inject()(val messagesApi: MessagesApi, cygnumC
   //TODO: set up app-staging-config
   //TODO: set up app-qa-config
   //TODO: set up app-production-config
-
   //TODO: build pipeline
+  //TODO: Squid integration
+  //TODO: Construct SOAP Envelope
+  //TODO: Construct XML request
+  //TODO: handle the response here
+  //TODO: get the SOAP body
+  //TODO: build the soap envelope
+  //TODO: build the body
+  //TODO: make the request
+  //TODO: process response
+  //TODO: extract the id and send back as a JSON value
 
+  def getUrn() = Action { implicit request =>
 
-  //TODO: need a base64 encoding of the public key for the certificate (who will do this and how do I add it) - get it from Ofsted!
+    cc.getUrn() match {
+      case \/-(u) => Ok(u.get.value)
+      case -\/(e) => InternalServerError(e)
+    }
 
+  }
 
-  /*
-    Get keystore and truststore setup and make a call using this setup plus the Fiddler.xml just to prove
-    that the Play SSL lib can call the SOAP API like the Java client
-
-    controller -> connector -> service -> service makes call
-
-    controller should pass the header carrier object, and the payload (payload should be unformatted and with utf-8 encoding
-   */
-
-  def send = Action {
+  def send(formId: String) = Action.async {
     implicit request =>
-      /*
-        Create the keystore/truststore // there should be no reference to these in the controller, they should be hidden in the service or http client
-        Build the client
-        Build the SOAP/XML HTTP request
-        Make the request
-       */
-
-//      val payload = request.body.asXml
-//
-//      payload match {
-//        case Some(_) => // make the request to cygnum
-//        case None =>  // report bad request and log the problem
-//      }
-      cygnumConnector.send()
-      Ok("")
+      cc.send().map {
+        case \/-(SubmissionSuccess(_)) => Ok("")
+        case -\/(SubmissionFailure(_)) => Ok("") //what status do I return here?
+      }
   }
 
 }
