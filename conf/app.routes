@@ -1,4 +1,4 @@
 # microservice specific routes
 
-
-POST    /send       uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormsProxyController.send()
+POST    /send/:formId       uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormsProxyController.send(formId : String)
+GET     /getUrn             uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormsProxyController.getUrn()

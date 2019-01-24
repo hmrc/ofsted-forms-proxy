@@ -16,6 +16,10 @@
 
 package uk.gov.hmrc.ofstedformsproxy.models
 
-class SubmissionSuccess {
+import play.api.libs.json.Json
 
+case class SubmissionSuccess (message : String)
+
+object SubmissionSuccess{
+  implicit val submissionSuccessFormat = Json.format[SubmissionSuccess]
 }
