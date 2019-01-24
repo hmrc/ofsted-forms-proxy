@@ -64,44 +64,6 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
   val u1 = u0 + "-1"
   val u2 = u0 + "-2"
 
-  override def call(soapMessage: SOAPMessage): SoapMessageException \/ Unit = Try{
-    System.setProperty("javax.xml.soap.MessageFactory", "com.sun.xml.internal.messaging.saaj.soap.ver1_2.SOAPMessageFactory1_2Impl")
-    System.setProperty("javax.xml.bind.JAXBContext", "com.sun.xml.internal.bind.v2.ContextFactory")
-    val soapFile = new File("/home/mikail/Downloads/boo11.xml")
-    val fis = new FileInputStream(soapFile)
-    val ss = new StreamSource(fis)
-
-    // Create a SOAP Message Object
-
-    val msg = MessageFactory.newInstance.createMessage
-    val soapPart = msg.getSOAPPart
-
-
-    // Set the soapPart Content with the stream source
-    soapPart.setContent(ss)
-
-    // Create a webService connection
-
-    val soapConnectionFactory = SOAPConnectionFactory.newInstance
-    val soapConnection = soapConnectionFactory.createConnection
-
-
-    // Invoke the webService.
-
-    val soapEndpointUrl = "https://testinfogateway.ofsted.gov.uk/OnlineOfsted/GatewayOOServices.svc"
-    val resp = soapConnection.call(msg, soapEndpointUrl)
-
-    // Reading result
-    resp.writeTo(System.out)
-
-    fis.close()
-    soapConnection.close()
-
-  } match {
-    case Success(value) => \/-(value)
-    case Failure(exception) => -\/(SoapMessageException("Some failure in call"))
-  }
-
   def readInXMLPayload(path: String): SoapMessageException \/ org.w3c.dom.Document = {
 
     env.getExistingFile(path) match {
@@ -371,5 +333,45 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
       case Failure(exception) => -\/(SoapMessageException(exception.getMessage))
     }
   }
+
+
+  override def call(soapMessage: SOAPMessage): SoapMessageException \/ Unit = Try{
+    System.setProperty("javax.xml.soap.MessageFactory", "com.sun.xml.internal.messaging.saaj.soap.ver1_2.SOAPMessageFactory1_2Impl")
+    System.setProperty("javax.xml.bind.JAXBContext", "com.sun.xml.internal.bind.v2.ContextFactory")
+    val soapFile = new File("/home/mikail/Downloads/boo11.xml")
+    val fis = new FileInputStream(soapFile)
+    val ss = new StreamSource(fis)
+
+    // Create a SOAP Message Object
+
+    val msg = MessageFactory.newInstance.createMessage
+    val soapPart = msg.getSOAPPart
+
+
+    // Set the soapPart Content with the stream source
+    soapPart.setContent(ss)
+
+    // Create a webService connection
+
+    val soapConnectionFactory = SOAPConnectionFactory.newInstance
+    val soapConnection = soapConnectionFactory.createConnection
+
+
+    // Invoke the webService.
+
+    val soapEndpointUrl = "https://testinfogateway.ofsted.gov.uk/OnlineOfsted/GatewayOOServices.svc"
+    val resp = soapConnection.call(msg, soapEndpointUrl)
+
+    // Reading result
+    resp.writeTo(System.out)
+
+    fis.close()
+    soapConnection.close()
+
+  } match {
+    case Success(value) => \/-(value)
+    case Failure(exception) => -\/(SoapMessageException("Some failure in call"))
+  }
+
 
 }

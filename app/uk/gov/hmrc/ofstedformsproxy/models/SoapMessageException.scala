@@ -17,9 +17,17 @@
 package uk.gov.hmrc.ofstedformsproxy.models
 
 import play.api.libs.json.Json
+import scalaz.Monoid
 
 case class SoapMessageException(message: String)
 
 object SoapMessageException {
+
+  implicit object SoapMessageExceptionMonoid extends Monoid[SoapMessageException] {
+    def zero: SoapMessageException = SoapMessageException("")
+
+    def append(s1: SoapMessageException, s2: => SoapMessageException): SoapMessageException = SoapMessageException(s1.message + " | " + s2.message)
+  }
+
   implicit val soapExceptionFormat = Json.format[SoapMessageException]
 }
