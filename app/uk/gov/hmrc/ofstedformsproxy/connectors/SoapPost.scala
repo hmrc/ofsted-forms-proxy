@@ -41,7 +41,7 @@ object SoapPost {
 
     override protected def configuration = None //TODO: double check this
 
-    override def wsProxyServer = WSProxyConfiguration(s"{$env}")
+    override def wsProxyServer = WSProxyConfiguration("microservice.services.cygnum.proxy")
   }
 
 }

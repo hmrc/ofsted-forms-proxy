@@ -60,6 +60,12 @@ class OfstedFormsProxyController @Inject()(val messagesApi: MessagesApi, cc: Cyg
   //TODO: process response
   //TODO: extract the id and send back as a JSON value
 
+  def bc() = Action {
+    implicit request =>
+      cc.bc()
+      Ok("")
+  }
+
   def getUrn() = Action { implicit request =>
 
     cc.getUrn() match {
@@ -71,7 +77,7 @@ class OfstedFormsProxyController @Inject()(val messagesApi: MessagesApi, cc: Cyg
 
   def send(formId: String) = Action.async {
     implicit request =>
-      cc.send().map {
+      cc.send("").map {
         case \/-(SubmissionSuccess(_)) => Ok("")
         case -\/(SubmissionFailure(_)) => Ok("") //what status do I return here?
       }

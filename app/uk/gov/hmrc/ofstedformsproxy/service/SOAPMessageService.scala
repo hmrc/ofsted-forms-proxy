@@ -164,7 +164,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
     val passwordHashedBase64 = Base64.getEncoder.encodeToString(passwordHashed)
     // (iv) Open the cert using KeyStore
     val keystore = KeyStore.getInstance("jks")
-    keystore.load(new FileInputStream(new File("/home/mikail/Downloads/ofsted.jks")), password.toCharArray)
+    keystore.load(new FileInputStream(new File("/Users/hmrc/Tmp/ofsted.jks")), password.toCharArray)
     // (v) Extract Private Key
     val key = keystore.getKey("le-externalextranetuser!00282yearsha22003template!0029-7c3ba8e1-ea15-421f-bd7a-a3cfea301c83", password.toCharArray).asInstanceOf[PrivateKey]
     key
@@ -316,7 +316,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
     val passwordHashedbase64 = Base64.getEncoder.encodeToString(passwordHashed)
     // (iv) Open the Seat using KeyStore
     val keystore = KeyStore.getInstance("JKS")
-    keystore.load(new FileInputStream(new File("/home/mikail/Downloads/ofsted.jks")), password.toCharArray)
+    keystore.load(new FileInputStream(new File("/Users/hmrc/Tmp/ofsted.jks")), password.toCharArray)
     // (v) Extract the certificate.
     val cert = keystore.getCertificate("le-externalextranetuser!00282yearsha22003template!0029-7c3ba8e1-ea15-421f-bd7a-a3cfea301c83")
     cert
@@ -324,7 +324,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
 
   override def outputFile(soapMessage : SOAPMessage) : SoapMessageException \/ Unit = {
     Try {
-      val outputFile = new File("/home/mikail/Downloads/playTest.xml")
+      val outputFile = new File("/Users/hmrc/Tmp/playTest.xml")
       val fos = new FileOutputStream(outputFile)
       soapMessage.writeTo(fos)
       fos.close()
@@ -338,7 +338,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
   override def call(soapMessage: SOAPMessage): SoapMessageException \/ Unit = Try{
     System.setProperty("javax.xml.soap.MessageFactory", "com.sun.xml.internal.messaging.saaj.soap.ver1_2.SOAPMessageFactory1_2Impl")
     System.setProperty("javax.xml.bind.JAXBContext", "com.sun.xml.internal.bind.v2.ContextFactory")
-    val soapFile = new File("/home/mikail/Downloads/boo11.xml")
+    val soapFile = new File("/Users/hmrc/Tmp/playTest.xml")
     val fis = new FileInputStream(soapFile)
     val ss = new StreamSource(fis)
 
