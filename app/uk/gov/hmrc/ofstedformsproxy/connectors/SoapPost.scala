@@ -26,8 +26,6 @@ import uk.gov.hmrc.play.http.ws.{WSProxy, WSProxyConfiguration}
 import scala.concurrent.Future
 import scala.xml.Elem
 
-//This is the GG Proxy implementation - we may not need this because essentially we construct the SOAP Envelope from scratch and
-//send that over HTTP
 trait SoapPost extends WSProxy with ConnectionTracing with HttpVerbs with HttpVerb {
   def post[A](url: String, body: A, headers: Seq[(String, String)])(implicit wrt: Writeable[A], hc: HeaderCarrier): Future[SoapHttpResponse]
 }
@@ -35,8 +33,16 @@ trait SoapPost extends WSProxy with ConnectionTracing with HttpVerbs with HttpVe
 object SoapPost {
 
   def apply(env: String): SoapPost = new SoapPost {
-    override def post[A](url: String, body: A, headers: Seq[(String, String)])(implicit wrt: Writeable[A], hc: HeaderCarrier) = withTracing(POST, url) {
-      buildRequest(url).withHeaders(headers: _*).post(body).map(new SoapResponse(_))
+    override def post[A](url: String, body: A, headers: Seq[(String, String)])(implicit wrt: Writeable[A], hc: HeaderCarrier) =
+      withTracing(POST, url) {
+      val req = buildRequest(url).withHeaders(headers: _*)
+        println("-----------------\n\n\n\n")
+        println(url)
+        println("-----------------\n\n\n\n")
+        println(headers.toString)
+        println(req.toString)
+        println("-----------------\n\n\n\n")
+        req.post(body).map(new SoapResponse(_))
     }
 
     override protected def configuration = None //TODO: double check this

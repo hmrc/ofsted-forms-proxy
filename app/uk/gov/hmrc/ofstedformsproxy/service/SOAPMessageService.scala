@@ -38,22 +38,21 @@ import org.w3c.dom.{DOMException, Document}
 import org.xml.sax.SAXException
 import play.api.Environment
 import scalaz._
-import uk.gov.hmrc.ofstedformsproxy.models.SoapMessageException
 
 import scala.util.{Failure, Success, Try}
 
 @ImplementedBy(classOf[SOAPMessageServiceImpl])
 trait SOAPMessageService {
 
-  def readInXMLPayload(path: String): SoapMessageException \/ Document
+  def readInXMLPayload(path: String): String \/ Document
 
-  def createSOAPEnvelope(document: Document): SoapMessageException \/ SOAPMessage
+  def createSOAPEnvelope(document: Document): String \/ SOAPMessage
 
-  def signSOAPMessage(soapMessage: SOAPMessage): SoapMessageException \/ SOAPMessage
+  def signSOAPMessage(soapMessage: SOAPMessage): String \/ SOAPMessage
 
-  def outputFile(soapMessage : SOAPMessage): SoapMessageException \/ Unit
+  def outputFile(soapMessage : SOAPMessage): String \/ Unit
 
-  def call(soapMessage : SOAPMessage) : SoapMessageException \/ Unit
+  def call(soapMessage : SOAPMessage) : String \/ Unit
 
 }
 
@@ -64,7 +63,10 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
   val u1 = u0 + "-1"
   val u2 = u0 + "-2"
 
-  def readInXMLPayload(path: String): SoapMessageException \/ org.w3c.dom.Document = {
+  System.setProperty("javax.xml.soap.MessageFactory", "com.sun.xml.internal.messaging.saaj.soap.ver1_2.SOAPMessageFactory1_2Impl")
+  System.setProperty("javax.xml.bind.JAXBContext", "com.sun.xml.internal.bind.v2.ContextFactory")
+
+  def readInXMLPayload(path: String): String \/ org.w3c.dom.Document = {
 
     env.getExistingFile(path) match {
       case Some(xml) => Try {
@@ -74,43 +76,42 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
       }
       match {
         case Success(document) => \/-(document)
-        case Failure(e: ParserConfigurationException) => -\/(SoapMessageException(e.getMessage))
-        case Failure(e: SAXException) => -\/(SoapMessageException(e.getMessage))
-        case Failure(e: IOException) => -\/(SoapMessageException(e.getMessage))
+        case Failure(e: ParserConfigurationException) => -\/(e.getMessage)
+        case Failure(e: SAXException) => -\/(e.getMessage)
+        case Failure(e: IOException) => -\/(e.getMessage)
       }
       case None => {
-        -\/(SoapMessageException("XML payload file does not exist."))
+        -\/("XML payload file does not exist.")
       }
     }
   }
 
-  def createSOAPEnvelope(xmlDocument: Document): SoapMessageException \/ SOAPMessage = {
+  def createSOAPEnvelope(xmlDocument: Document): String \/ SOAPMessage = Try {
+    // Create SOAP Message
+    val messageFactory = MessageFactory.newInstance
+    val soapMessage = messageFactory.createMessage
+    val soapEnvelope = soapMessage.getSOAPPart.getEnvelope
+    soapEnvelope.setPrefix("s")
+    soapEnvelope.removeNamespaceDeclaration("SOAP-ENV")
 
-    Try {
-      // Create SOAP Message
-      val messageFactory = MessageFactory.newInstance
-      val soapMessage = messageFactory.createMessage
-      val soapEnvelope = soapMessage.getSOAPPart.getEnvelope
-      soapEnvelope.setPrefix("s")
+    soapEnvelope.addNamespaceDeclaration("a", "http://www.w3.org/2005/08/addressing")
+    soapEnvelope.addNamespaceDeclaration("u", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd")
+//    soapEnvelope.addNamespaceDeclaration("env", "http://schemas.xmlsoap.org/soap/envelope/")
 
-      soapEnvelope.addNamespaceDeclaration("a", "http://www.w3.org/2005/08/addressing")
-      soapEnvelope.addNamespaceDeclaration("u", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd")
+    // Add DOM object to SOAP body
+    val soapBody = soapMessage.getSOAPBody
+    soapBody.setPrefix("s")
+    soapBody.addDocument(xmlDocument)
+    soapBody.addAttribute(soapEnvelope.createName("Id", "u", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"), "_1")
+    soapMessage
 
-      // Add DOM object to SOAP body
-      val soapBody = soapMessage.getSOAPBody
-      soapBody.setPrefix("s")
-      soapBody.addDocument(xmlDocument)
-      soapBody.addAttribute(soapEnvelope.createName("Id", "u", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"), "_1")
-      soapMessage
-
-    } match {
-      case Success(soapMessage) => \/-(soapMessage)
-      case Failure(e: SOAPException) => -\/(SoapMessageException(e.getMessage))
-      case Failure(e: DOMException) => -\/(SoapMessageException(e.getMessage))
-    }
+  } match {
+    case Success(soapMessage) => \/-(soapMessage)
+    case Failure(e: SOAPException) => -\/(e.getMessage)
+    case Failure(e: DOMException) => -\/(e.getMessage)
   }
 
-  override def signSOAPMessage(soapMessage: SOAPMessage): SoapMessageException \/ SOAPMessage = {
+  override def signSOAPMessage(soapMessage: SOAPMessage): String \/ SOAPMessage = {
 
     Try {
       val soapHeader: SOAPHeader = soapMessage.getSOAPHeader
@@ -140,13 +141,13 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
       soapMessage
     } match {
       case Success(signedSoapMessage) => \/-(signedSoapMessage)
-      case Failure(e: SOAPException) => -\/(SoapMessageException(e.getMessage))
-      case Failure(e: DOMException) => -\/(SoapMessageException(e.getMessage))
-      case Failure(e: NoSuchAlgorithmException) => -\/(SoapMessageException(e.getMessage))
-      case Failure(e: KeyStoreException) => -\/(SoapMessageException(e.getMessage))
-      case Failure(e: CertificateEncodingException) => -\/(SoapMessageException(e.getMessage))
-      case Failure(e: InvalidAlgorithmParameterException) => -\/(SoapMessageException(e.getMessage))
-      case Failure(e: XMLSignatureException) => -\/(SoapMessageException(e.getMessage))
+      case Failure(e: SOAPException) => -\/(e.getMessage)
+      case Failure(e: DOMException) => -\/(e.getMessage)
+      case Failure(e: NoSuchAlgorithmException) => -\/(e.getMessage)
+      case Failure(e: KeyStoreException) => -\/(e.getMessage)
+      case Failure(e: CertificateEncodingException) => -\/(e.getMessage)
+      case Failure(e: InvalidAlgorithmParameterException) => -\/(e.getMessage)
+      case Failure(e: XMLSignatureException) => -\/(e.getMessage)
     }
 
   }
@@ -164,7 +165,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
     val passwordHashedBase64 = Base64.getEncoder.encodeToString(passwordHashed)
     // (iv) Open the cert using KeyStore
     val keystore = KeyStore.getInstance("jks")
-    keystore.load(new FileInputStream(new File("/Users/hmrc/Tmp/ofsted.jks")), password.toCharArray)
+    keystore.load(new FileInputStream(new File("/home/mikail/Tmp/Ofsted/ofsted.jks")), password.toCharArray)
     // (v) Extract Private Key
     val key = keystore.getKey("le-externalextranetuser!00282yearsha22003template!0029-7c3ba8e1-ea15-421f-bd7a-a3cfea301c83", password.toCharArray).asInstanceOf[PrivateKey]
     key
@@ -316,29 +317,29 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
     val passwordHashedbase64 = Base64.getEncoder.encodeToString(passwordHashed)
     // (iv) Open the Seat using KeyStore
     val keystore = KeyStore.getInstance("JKS")
-    keystore.load(new FileInputStream(new File("/Users/hmrc/Tmp/ofsted.jks")), password.toCharArray)
+    keystore.load(new FileInputStream(new File("/home/mikail/Tmp/Ofsted/ofsted.jks")), password.toCharArray)
     // (v) Extract the certificate.
     val cert = keystore.getCertificate("le-externalextranetuser!00282yearsha22003template!0029-7c3ba8e1-ea15-421f-bd7a-a3cfea301c83")
     cert
   }
 
-  override def outputFile(soapMessage : SOAPMessage) : SoapMessageException \/ Unit = {
+  override def outputFile(soapMessage : SOAPMessage) : String \/ Unit = {
     Try {
-      val outputFile = new File("/Users/hmrc/Tmp/playTest.xml")
+      val outputFile = new File("/home/mikail/Tmp/Ofsted/playTest.xml")
       val fos = new FileOutputStream(outputFile)
       soapMessage.writeTo(fos)
       fos.close()
     } match {
       case Success(a) => \/-(a)
-      case Failure(exception) => -\/(SoapMessageException(exception.getMessage))
+      case Failure(exception) => -\/(exception.getMessage)
     }
   }
 
 
-  override def call(soapMessage: SOAPMessage): SoapMessageException \/ Unit = Try{
+  override def call(soapMessage: SOAPMessage): String \/ Unit = Try{
     System.setProperty("javax.xml.soap.MessageFactory", "com.sun.xml.internal.messaging.saaj.soap.ver1_2.SOAPMessageFactory1_2Impl")
     System.setProperty("javax.xml.bind.JAXBContext", "com.sun.xml.internal.bind.v2.ContextFactory")
-    val soapFile = new File("/Users/hmrc/Tmp/playTest.xml")
+    val soapFile = new File("/home/mikail/Tmp/Ofsted/playTest.xml")
     val fis = new FileInputStream(soapFile)
     val ss = new StreamSource(fis)
 
@@ -370,7 +371,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
 
   } match {
     case Success(value) => \/-(value)
-    case Failure(exception) => -\/(SoapMessageException("Some failure in call"))
+    case Failure(exception) => -\/("Some failure in call")
   }
 
 
