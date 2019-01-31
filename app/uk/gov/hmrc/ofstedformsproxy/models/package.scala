@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.ofstedformsproxy.models
+package uk.gov.hmrc.ofstedformsproxy
 
-import play.api.libs.json.Json
+package object models {
 
-case class GetUrnFailure (errorMessage : String)
+  type SeqOfHeader = Seq[(String, String)]
 
-object GetUrnFailure{
-  implicit val getUrnFormat = Json.format[GetUrnFailure]
 }

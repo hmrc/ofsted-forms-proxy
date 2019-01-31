@@ -18,11 +18,13 @@ package uk.gov.hmrc.ofstedformsproxy.controllers
 
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.libs.json.Json
 import play.api.mvc._
 import scalaz.{-\/, \/-}
 import uk.gov.hmrc.ofstedformsproxy.connectors.CygnumConnector
-import uk.gov.hmrc.ofstedformsproxy.models.{SubmissionFailure, SubmissionSuccess}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+
+import scala.xml.XML._
 
 //TODO: do not inject the connector here, inject the service class
 @Singleton
@@ -60,27 +62,18 @@ class OfstedFormsProxyController @Inject()(val messagesApi: MessagesApi, cc: Cyg
   //TODO: process response
   //TODO: extract the id and send back as a JSON value
 
-  def bc() = Action {
-    implicit request =>
-      cc.bc()
-      Ok("")
-  }
-
   def getUrn() = Action { implicit request =>
+    Ok("")
+//
+//    cc.getUrn().map{
+//      case \/-(xmlResponse) => {
+//        val dataResult = (xmlResponse \\ "GetDataResult").text
+//        val urn = (loadString(dataResult) \\ "URN").text
+//        Ok(Json.obj("urn" -> urn))
+//      }
+//      case -\/(f) => BadRequest(f)
+//    }
 
-    cc.getUrn() match {
-      case \/-(u) => Ok(u.get.value)
-      case -\/(e) => InternalServerError(e)
-    }
-
-  }
-
-  def send(formId: String) = Action.async {
-    implicit request =>
-      cc.send("").map {
-        case \/-(SubmissionSuccess(_)) => Ok("")
-        case -\/(SubmissionFailure(_)) => Ok("") //what status do I return here?
-      }
   }
 
 }

@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.ofstedformsproxy.config
+package uk.gov.hmrc.ofstedformsproxy.controllers
 
-import javax.inject.{Inject, Singleton}
+import play.api.http.Status
+import uk.gov.hmrc.customs.api.common.controllers.{ErrorResponse, HttpStatusCodeShortDescriptions}
 
-import play.api.i18n.MessagesApi
-import play.api.mvc.Request
-import play.twirl.api.Html
-import uk.gov.hmrc.play.bootstrap.http.FrontendErrorHandler
-import uk.gov.hmrc.ofstedformsproxy.views
+object CustomErrorResponses extends HttpStatusCodeShortDescriptions {
+  val badGatewayErrorResponses = ErrorResponse(Status.BAD_GATEWAY, BadGateway, "Bad Gateway")
+}
 
-@Singleton
-class ErrorHandler @Inject()(val messagesApi: MessagesApi, implicit val appConfig: AppConfig) extends FrontendErrorHandler {
-  override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit request: Request[_]): Html =
-    views.html.error_template(pageTitle, heading, message)
+object CustomHeaderNames {
+  val X_CONVERSATION_ID_HEADER_NAME: String = "X-Conversation-ID"
 }

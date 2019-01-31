@@ -1,5 +1,5 @@
 # microservice specific routes
 
-POST    /send/:formId       uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormsProxyController.send(formId : String)
-GET     /getUrn             uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormsProxyController.getUrn()
-GET     /bc             uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormsProxyController.bc
+#POST    /send/:formId       uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormsProxyController.send(formId : String)
+#GET     /getUrn             uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormsProxyController.getUrn()
+GET     /geturn             uk.gov.hmrc.ofstedformsproxy.controllers.OutboundCallController.submit2()
