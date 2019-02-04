@@ -16,27 +16,25 @@
 
 package uk.gov.hmrc.ofstedformsproxy.controllers
 
+import java.net.URL
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 import javax.inject.{Inject, Singleton}
 import play.api.i18n._
-import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
+import play.api.libs.json.Json
 import play.api.mvc._
-import scalaz.{-\/, \/, \/-}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpException, Upstream4xxResponse, Upstream5xxResponse}
+import scalaz.{-\/, \/-}
+import uk.gov.hmrc.http._
+import uk.gov.hmrc.ofstedformsproxy.config.AppConfig
 import uk.gov.hmrc.ofstedformsproxy.connectors.{CygnumConnector, OutboundServiceConnector}
 import uk.gov.hmrc.ofstedformsproxy.logging.{LoggingHelper, NotificationLogger}
 import uk.gov.hmrc.ofstedformsproxy.models.OutboundCallRequest
 import uk.gov.hmrc.ofstedformsproxy.service.{AuditingService, SOAPMessageService}
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorBadRequest
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.control.NonFatal
-import scala.util.{Failure, Success, Try}
-import scala.concurrent.ExecutionContext.Implicits.global
-import java.net.URL
-
 import scala.xml.Elem
 
 @Singleton
@@ -45,43 +43,70 @@ class OutboundCallController @Inject()(outboundServiceConnector: OutboundService
                                        cc: CygnumConnector,
                                        logger: NotificationLogger,
                                        messagesApi: MessagesApi,
-                                       auditingService: AuditingService)
+                                       auditingService: AuditingService,
+                                       appConfig: AppConfig)
   extends CygnumController(outboundServiceConnector, logger, messagesApi) {
 
-  def submit2() = Action.async {
+
+  def submitForm() = Action.async {
     implicit request =>
 
-      val payload: String \/ String = cc.getUrn()
+      val payload = request.body.asXml
 
       payload match {
-        case \/-(s) => callOutboundService(OutboundCallRequest(new URL("https://testinfogateway.ofsted.gov.uk/OnlineOfsted/GatewayOOServices.svc"), "", "", Seq.empty, s))
-        case -\/(e) => Future.successful(BadRequest(e))
-      }
-
-  }
-
-  def submit(): Action[Try[JsValue]] = validateAccept(acceptHeaderValidation).async(tryJsonParser) {
-    implicit request =>
-
-      request.body match {
-
-        case Success(js) =>
-          js.validate[OutboundCallRequest] match {
-            case JsSuccess(requestPayload, _) =>
-              logger.debug(s"${LoggingHelper.logMsgPrefix(requestPayload.conversationId)} Notification passed header validation with payload containing ", url = requestPayload.url.toString, payload = requestPayload.xmlPayload)
-              callOutboundService(requestPayload)
-            case error: JsError =>
-              logger.error("JSON payload failed schema validation")
-              Future.successful(invalidJsonErrorResponse(error).JsonResult)
+        case Some(p) => {
+          soapService.buildFormSubmissionSOAPPayload(p) match {
+            case \/-(formPayload) => {
+              logger.debug(s"Constructed Send Data payload: ", url = appConfig.cygnumURL, payload = p.toString)
+              callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", "", Seq.empty, formPayload), processFormSubmissionResponse)
+            }
+            case -\/(error) => {
+              logger.error("Failed to build the Send Data SOAP Payload")
+              Future.successful(BadRequest(error))
+            }
           }
-
-        case Failure(ex) =>
-          logger.error(nonJsonBodyErrorMessage)
-          Future.successful(errorBadRequest(nonJsonBodyErrorMessage).JsonResult)
+        }
+        case None => Future.successful(Ok(""))
       }
   }
 
-  def callOutboundService(outboundCallRequest: OutboundCallRequest)(implicit hc: HeaderCarrier): Future[Result] = {
+  def getUrn() = Action.async {
+    implicit request =>
+      soapService.buildGetUrnSOAPPayload() match {
+        case \/-(getUrnPayload) => {
+          logger.debug(s"Constructed GetURN payload: ", url = appConfig.cygnumURL, payload = getUrnPayload)
+          callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", "", Seq.empty, getUrnPayload), processGetURNResponse)
+        }
+        case -\/(error) => {
+          logger.error("Failed to build the GetURN SOAP Payload")
+          Future.successful(BadRequest(error))
+        }
+      }
+  }
+
+  private def processGetURNResponse(response: HttpResponse) = {
+    val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
+    val tmp: String = (xmlResponse \\ "GetDataResult").text
+    val urn: String = (scala.xml.XML.loadString(tmp) \\ "URN").text
+
+    if (!urn.isEmpty)
+      Ok(Json.obj("urn" -> urn))
+    else
+      Conflict
+  }
+
+  private def processFormSubmissionResponse(response: HttpResponse) = {
+    val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
+    val tmp: String = (xmlResponse \\ "SendDataResult").text
+    val status: String = (scala.xml.XML.loadString(tmp) \\ "Status").text
+
+    if (!status.isEmpty)
+      Ok(Json.obj("status" -> status))
+    else
+      Conflict
+  }
+
+  private def callOutboundService(outboundCallRequest: OutboundCallRequest, responseHandler: HttpResponse => Result)(implicit hc: HeaderCarrier): Future[Result] = {
     val logPrefix = LoggingHelper.logMsgPrefix(outboundCallRequest.conversationId)
     val startTime = LocalDateTime.now
     outboundServiceConnector.callOutboundService(outboundCallRequest)
@@ -89,12 +114,7 @@ class OutboundCallController @Inject()(outboundServiceConnector: OutboundService
         logCallDuration(startTime, logPrefix)
         logger.info(s"${logPrefix}Outbound call succeeded")
         auditingService.auditSuccessfulNotification(outboundCallRequest)
-        println(response.body)
-        val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
-        val tmp = (xmlResponse \\ "GetDataResult").text
-        val urn = (scala.xml.XML.loadString(tmp) \\ "URN").text
-        Ok(Json.obj("urn" -> urn))
-//        NoContent
+        responseHandler(response)
       }.recover {
       case upstream4xx: Upstream4xxResponse =>
         logCallDuration(startTime, logPrefix)
@@ -115,7 +135,7 @@ class OutboundCallController @Inject()(outboundServiceConnector: OutboundService
     }
   }
 
-  protected def logCallDuration(startTime: LocalDateTime, logPrefix: String)(implicit hc: HeaderCarrier): Unit ={
+  protected def logCallDuration(startTime: LocalDateTime, logPrefix: String)(implicit hc: HeaderCarrier): Unit = {
     val callDuration = ChronoUnit.MILLIS.between(startTime, LocalDateTime.now)
     logger.info(s"${logPrefix}Outbound call duration was ${callDuration} ms")
   }

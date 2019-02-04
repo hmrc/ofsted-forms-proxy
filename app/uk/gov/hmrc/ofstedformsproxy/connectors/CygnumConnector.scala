@@ -40,7 +40,7 @@ import scala.xml.{Elem, XML}
 @ImplementedBy(classOf[CygnumConnectorImpl])
 trait CygnumConnector {
 
-  def getUrn()(implicit hc: HeaderCarrier, ex: ExecutionContext) : String \/ String
+  //def getUrn()(implicit hc: HeaderCarrier, ex: ExecutionContext) : String \/ String
 
 }
 
@@ -59,31 +59,29 @@ class CygnumConnectorImpl @Inject()(auditConnector: AuditConnector,
 
   //TODO: Get the URL to call from config
   private val cygnumUrl = "https://testinfogateway.ofsted.gov.uk/OnlineOfsted/GatewayOOServices.svc"
-
-  def getUrn()(implicit hc: HeaderCarrier, ex: ExecutionContext): String \/ String= {
-    //TODO: process the request body
-    //TODO: call the post method via the connector interface
-    //TODO: the payload body needs to be a string representation
-    //TODO: construct the soap envelope
-    //TODO: construct the message
-    //TODO: process response
-    //TODO: extract the urn
-
-    val XML_FILE_PATH = "conf/xml/GetNewURN.xml"
-
-    val result: String \/ String = for {
-      xmlDocument       <- soapMessageService.readInXMLPayload(XML_FILE_PATH)
-      soapMessage       <- soapMessageService.createSOAPEnvelope(xmlDocument)
-      signedSoapMessage <- soapMessageService.signSOAPMessage(soapMessage)
-      //response          <- EitherT.eitherT(send(signedSoapMessage))
-    } yield convert(signedSoapMessage) //urn
-
-    result match {
-      case \/-(d) => \/-(d)
-      case -\/(e) => -\/(e)
-    }
-
-  }
+//
+//  def getUrn()(implicit hc: HeaderCarrier, ex: ExecutionContext): String \/ String= {
+//    //TODO: process the request body
+//    //TODO: call the post method via the connector interface
+//    //TODO: the payload body needs to be a string representation
+//    //TODO: construct the soap envelope
+//    //TODO: construct the message
+//    //TODO: process response
+//    //TODO: extract the urn
+//
+//    val result: String \/ String = for {
+//      xmlDocument       <- soapMessageService.readInXMLPayload(appConfig.getUrnXMLBody)
+//      soapMessage       <- soapMessageService.createSOAPEnvelope(xmlDocument)
+//      signedSoapMessage <- soapMessageService.signSOAPMessage(soapMessage)
+//      //response          <- EitherT.eitherT(send(signedSoapMessage))
+//    } yield convert(signedSoapMessage) //urn
+//
+//    result match {
+//      case \/-(d) => \/-(d)
+//      case -\/(e) => -\/(e)
+//    }
+//
+//  }
 
   def createTempFileForData(data: SOAPMessage): File = {
     val file = File.createTempFile(getClass.getSimpleName, ".tmp")

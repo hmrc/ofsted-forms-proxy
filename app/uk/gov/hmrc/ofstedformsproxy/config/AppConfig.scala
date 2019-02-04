@@ -31,7 +31,8 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
   private val contactHost = runModeConfiguration.getString(s"contact-frontend.host").getOrElse("")
   private val contactFormServiceIdentifier = "MyService"
 
-  lazy val cygnumURL = loadConfig("microservice.services.cygnum.url")
+  lazy val cygnumURL = loadConfig(s"microservice.services.cygnum.url")
+  lazy val getUrnXMLBody = loadConfig("microservice.services.cygnum.getUrnXMLPayload")
   lazy val assetsPrefix = loadConfig(s"assets.url") + loadConfig(s"assets.version")
   lazy val analyticsToken = loadConfig(s"google-analytics.token")
   lazy val analyticsHost = loadConfig(s"google-analytics.host")
