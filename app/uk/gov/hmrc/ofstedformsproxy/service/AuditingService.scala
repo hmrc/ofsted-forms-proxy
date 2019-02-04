@@ -33,9 +33,9 @@ import scala.util.{Failure, Success}
 @Singleton
 class AuditingService @Inject()(logger: NotificationLogger, servicesConfig: ServicesConfig, auditConnector: AuditConnector) {
 
-  private val appName = "customs-notification-gateway"
-  private val transactionNameValue = "customs-declaration-outbound-call"
-  private val declarationNotificationOutboundCall = "DeclarationNotificationOutboundCall"
+  private val appName = "ofsted-forms-proxy"
+  private val transactionNameValue = "ofsted-forms-proxy-outbound-call"
+  private val ofstedFormsProxyOutboundCall = "OfstedFormsProxyOutboundCall"
   private val outboundCallUrl = "outboundCallUrl"
   private val outboundCallAuthToken = "outboundCallAuthToken"
   private val xConversationId = "x-conversation-id"
@@ -55,7 +55,6 @@ class AuditingService @Inject()(logger: NotificationLogger, servicesConfig: Serv
   private def auditNotification(request: OutboundCallRequest, successOrFailure: String, failureReason: Option[String]): Unit = {
 
     implicit val carrier = HeaderCarrier()
-    val logPrefix = LoggingHelper.logMsgPrefix(request.conversationId)
 
     val tags = Map(TransactionName -> transactionNameValue,
       xConversationId -> request.conversationId)
@@ -80,19 +79,19 @@ class AuditingService @Inject()(logger: NotificationLogger, servicesConfig: Serv
     auditConnector.sendExtendedEvent(
       ExtendedDataEvent(
         auditSource = appName,
-        auditType = declarationNotificationOutboundCall,
+        auditType = ofstedFormsProxyOutboundCall,
         tags = tags,
         detail = detail
       )).onComplete {
       case Success(auditResult) =>
-        logger.info(s"${logPrefix}successfully audited $successOrFailure event")
+        logger.info(s"Successfully audited $successOrFailure event")
         logger.debug(
-          s"""${logPrefix}successfully audited $successOrFailure event with
+          s"""Successfully audited $successOrFailure event with
              |payload url=${request.url}
              |payload headers=${request.outboundCallHeaders}
              |audit response=$auditResult""".stripMargin, Seq())
       case Failure(ex) =>
-        logger.error(s"${logPrefix}failed to audit $successOrFailure event", ex)
+        logger.error(s"Failed to audit $successOrFailure event", ex)
     }
   }
 }

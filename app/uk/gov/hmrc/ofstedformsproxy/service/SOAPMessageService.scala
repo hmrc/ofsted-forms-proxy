@@ -34,90 +34,62 @@ import javax.xml.crypto.dsig.keyinfo.KeyInfoFactory
 import javax.xml.crypto.dsig.spec.{C14NMethodParameterSpec, TransformParameterSpec}
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.soap._
-import javax.xml.transform.stream.StreamSource
 import org.w3c.dom.{DOMException, Document}
 import org.xml.sax.{InputSource, SAXException}
 import play.api.Environment
 import scalaz._
 import uk.gov.hmrc.ofstedformsproxy.config.AppConfig
-import uk.gov.hmrc.ofstedformsproxy.models.ServiceType
-import uk.gov.hmrc.ofstedformsproxy.models.ServiceType.ServiceType
+import uk.gov.hmrc.ofstedformsproxy.models.ServiceType._
 
 import scala.util.{Failure, Success, Try}
 import scala.xml.{NodeSeq, XML}
 
 @ImplementedBy(classOf[SOAPMessageServiceImpl])
 trait SOAPMessageService {
-
-  def buildGetUrnSOAPPayload(): String \/ String
-
-  def buildFormSubmissionSOAPPayload(node: NodeSeq): String \/ String
-
-  //def makeSubmitFormPayload() :
-
-//  // TODO: remove these methods from this trait
-//  def readInXMLPayload(path: String): String \/ Document
-//
-//  def createSOAPEnvelope(document: Document): String \/ SOAPMessage
-//
-//  def signSOAPMessage(soapMessage: SOAPMessage): String \/ SOAPMessage
-//
-//  def outputFile(soapMessage: SOAPMessage): String \/ Unit //TODO: remove this
-//
-//  def call(soapMessage: SOAPMessage): String \/ Unit //TODO: remove this
-
+  def buildGetURNPayload(): String \/ String
+  def buildFormSubmissionPayload(node: NodeSeq): String \/ String
 }
 
 @Singleton
 class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) extends SOAPMessageService {
 
-  val u0 = UUID.randomUUID.toString
-  val u1 = u0 + "-1"
-  val u2 = u0 + "-2"
+  val uuid: String = UUID.randomUUID.toString
+  val ID1: String = uuid + "-1"
+  val ID2: String = uuid + "-2"
 
   System.setProperty("javax.xml.soap.MessageFactory", "com.sun.xml.internal.messaging.saaj.soap.ver1_2.SOAPMessageFactory1_2Impl")
   System.setProperty("javax.xml.bind.JAXBContext", "com.sun.xml.internal.bind.v2.ContextFactory")
 
-  override def buildFormSubmissionSOAPPayload(node: NodeSeq): String \/ String = {
+  override def buildFormSubmissionPayload(node: NodeSeq): String \/ String = {
     val result: String \/ String = for {
       xmlDocument <- readInXMLPayload(node)
       soapMessage <- createSOAPEnvelope(xmlDocument)
-      signedSoapMessage <- signSOAPMessage(soapMessage, ServiceType.SendData)
-    } yield convert(signedSoapMessage)
+      signedSoapMessage <- signSOAPMessage(soapMessage, SendData)
+    } yield stringifySoapMessage(signedSoapMessage)
 
     result match {
-      case \/-(d) => \/-(d)
-      case -\/(e) => -\/(e)
+      case \/-(xmlPayload) => \/-(xmlPayload)
+      case -\/(error) => -\/(error)
     }
-
   }
 
-  override def buildGetUrnSOAPPayload(): String \/ String = {
-
-    //TODO: process the request body
-    //TODO: call the post method via the connector interface
-    //TODO: the payload body needs to be a string representation
-    //TODO: construct the soap envelope
-    //TODO: construct the message
-    //TODO: process response
-    //TODO: extract the urn
-
+  override def buildGetURNPayload(): String \/ String = {
     val result: String \/ String = for {
       xmlDocument <- readInXMLPayload("conf/xml/GetNewURN.xml") //TODO: use config file
       soapMessage <- createSOAPEnvelope(xmlDocument)
-      signedSoapMessage <- signSOAPMessage(soapMessage, ServiceType.GetData)
-    } yield convert(signedSoapMessage)
+      signedSoapMessage <- signSOAPMessage(soapMessage, GetData)
+    } yield stringifySoapMessage(signedSoapMessage)
 
     result match {
-      case \/-(d) => \/-(d)
-      case -\/(e) => -\/(e)
+      case \/-(xmlPayload) => \/-(xmlPayload)
+      case -\/(error) => -\/(error)
     }
 
   }
 
   private def createTempFileForData(data: SOAPMessage): File = {
     val file = File.createTempFile(getClass.getSimpleName + "-0", ".tmp")
-    //    file.deleteOnExit() //TODO: test the scenario when this function is called we delete the file in the finally clause
+    file.deleteOnExit()
     val os = new FileOutputStream(file)
     try {
       data.writeTo(os)
@@ -127,7 +99,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     }
   }
 
-  private def convert(soapMessage: SOAPMessage): String = {
+  private def stringifySoapMessage(soapMessage: SOAPMessage): String = {
     val file = File.createTempFile(getClass.getSimpleName, ".tmp")
     val fos = new FileOutputStream(file)
 
@@ -185,7 +157,6 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
 
     soapEnvelope.addNamespaceDeclaration("a", "http://www.w3.org/2005/08/addressing")
     soapEnvelope.addNamespaceDeclaration("u", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd")
-    //    soapEnvelope.addNamespaceDeclaration("env", "http://schemas.xmlsoap.org/soap/envelope/")
 
     // Add DOM object to SOAP body
     val soapBody = soapMessage.getSOAPBody
@@ -202,7 +173,8 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
 
   def signSOAPMessage(soapMessage: SOAPMessage, action: ServiceType): String \/ SOAPMessage = {
 
-    Try {
+    Try
+    {
       val soapHeader: SOAPHeader = soapMessage.getSOAPHeader
       soapHeader.setPrefix("s")
 
@@ -264,7 +236,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
   private def addSecurityToken(signature: SOAPElement) = {
     val securityTokenReference = signature.addChildElement("SecurityTokenReference", "o")
     val reference = securityTokenReference.addChildElement("Reference", "o")
-    reference.setAttribute("URI", String.format("#uuid-%s", u2))
+    reference.setAttribute("URI", String.format("#uuid-%s", ID2))
     reference.setAttribute("ValueType", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3")
     securityTokenReference
   }
@@ -316,7 +288,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     val certByte = cert.getEncoded
     // Add the Binary Security Token element
     val binarySecurityToken = securityElement.addChildElement("BinarySecurityToken", "o")
-    binarySecurityToken.setAttribute("u:Id", String.format("uuid-%s", u2))
+    binarySecurityToken.setAttribute("u:Id", String.format("uuid-%s", ID2))
     binarySecurityToken.setAttribute("ValueType", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3")
     binarySecurityToken.setAttribute("EncodingType", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary")
     binarySecurityToken.addTextNode(Base64.getEncoder.encodeToString(certByte))
@@ -342,7 +314,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     val action = soapHeader.addChildElement("Action", "a")
     val soapEnvelope = soapMessage.getSOAPPart.getEnvelope
     action.addAttribute(soapEnvelope.createName("mustUnderstand", "s", "http://www.w3.org/2003/05/soap-envelope"), "1")
-    if (serviceType == ServiceType.GetData)
+    if (serviceType == GetData)
       action.addTextNode("http://tempuri.org/IGatewayOOServices/GetData")
     else
       action.addTextNode("http://tempuri.org/IGatewayOOServices/SendData")
@@ -379,14 +351,13 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
   private def addUsernameToken(securityElement: SOAPElement, soapMessage: SOAPMessage) = {
     val usernameToken = securityElement.addChildElement("UsernameToken", "o")
     val soapEnvelope = soapMessage.getSOAPPart.getEnvelope
-    usernameToken.addAttribute(soapEnvelope.createName("Id", "u", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"), String.format("uuid-%s", u1))
+    usernameToken.addAttribute(soapEnvelope.createName("Id", "u", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"), String.format("uuid-%s", ID1))
     usernameToken.addChildElement("Username", "o").setValue("extranet\\hmrcgforms")
     val e = usernameToken.addChildElement("Password", "o")
     e.addAttribute(soapEnvelope.createName("Type", "o", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"), "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText")
     e.addTextNode("MX(6ZvLS7wmt~2\\")
     usernameToken
   }
-
 
   //TODO: wrap in Try
   private def addSecurity(soapHeader: SOAPElement, soapMessage: SOAPMessage) = {
@@ -414,57 +385,5 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     val cert = keystore.getCertificate("le-externalextranetuser!00282yearsha22003template!0029-7c3ba8e1-ea15-421f-bd7a-a3cfea301c83")
     cert
   }
-
-  def outputFile(soapMessage: SOAPMessage): String \/ Unit = {
-    Try {
-      val outputFile = new File("/home/mikail/Tmp/Ofsted/playTest.xml")
-      val fos = new FileOutputStream(outputFile)
-      soapMessage.writeTo(fos)
-      fos.close()
-    } match {
-      case Success(a) => \/-(a)
-      case Failure(exception) => -\/(exception.getMessage)
-    }
-  }
-
-
-  def call(soapMessage: SOAPMessage): String \/ Unit = Try {
-    System.setProperty("javax.xml.soap.MessageFactory", "com.sun.xml.internal.messaging.saaj.soap.ver1_2.SOAPMessageFactory1_2Impl")
-    System.setProperty("javax.xml.bind.JAXBContext", "com.sun.xml.internal.bind.v2.ContextFactory")
-    val soapFile = new File("/home/mikail/Tmp/Ofsted/playTest.xml")
-    val fis = new FileInputStream(soapFile)
-    val ss = new StreamSource(fis)
-
-    // Create a SOAP Message Object
-
-    val msg = MessageFactory.newInstance.createMessage
-    val soapPart = msg.getSOAPPart
-
-
-    // Set the soapPart Content with the stream source
-    soapPart.setContent(ss)
-
-    // Create a webService connection
-
-    val soapConnectionFactory = SOAPConnectionFactory.newInstance
-    val soapConnection = soapConnectionFactory.createConnection
-
-
-    // Invoke the webService.
-
-    val soapEndpointUrl = "https://testinfogateway.ofsted.gov.uk/OnlineOfsted/GatewayOOServices.svc"
-    val resp = soapConnection.call(msg, soapEndpointUrl)
-
-    // Reading result
-    resp.writeTo(System.out)
-
-    fis.close()
-    soapConnection.close()
-
-  } match {
-    case Success(value) => \/-(value)
-    case Failure(exception) => -\/("Some failure in call")
-  }
-
 
 }
