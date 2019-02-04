@@ -55,7 +55,7 @@ class OutboundCallController @Inject()(outboundServiceConnector: OutboundService
 
       payload match {
         case Some(p) => {
-          soapService.buildFormSubmissionSOAPPayload(p) match {
+          soapService.buildFormSubmissionPayload(p) match {
             case \/-(formPayload) => {
               logger.debug(s"Constructed Send Data payload: ", url = appConfig.cygnumURL, payload = p.toString)
               callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", "", Seq.empty, formPayload), processFormSubmissionResponse)
@@ -72,7 +72,7 @@ class OutboundCallController @Inject()(outboundServiceConnector: OutboundService
 
   def getUrn() = Action.async {
     implicit request =>
-      soapService.buildGetUrnSOAPPayload() match {
+      soapService.buildGetURNPayload() match {
         case \/-(getUrnPayload) => {
           logger.debug(s"Constructed GetURN payload: ", url = appConfig.cygnumURL, payload = getUrnPayload)
           callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", "", Seq.empty, getUrnPayload), processGetURNResponse)
@@ -84,6 +84,7 @@ class OutboundCallController @Inject()(outboundServiceConnector: OutboundService
       }
   }
 
+  //TODO: pull out error messages and return in the JSON
   private def processGetURNResponse(response: HttpResponse) = {
     val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
     val tmp: String = (xmlResponse \\ "GetDataResult").text
@@ -95,6 +96,7 @@ class OutboundCallController @Inject()(outboundServiceConnector: OutboundService
       Conflict
   }
 
+  //TODO: pull out error messages and return in the JSON
   private def processFormSubmissionResponse(response: HttpResponse) = {
     val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
     val tmp: String = (xmlResponse \\ "SendDataResult").text

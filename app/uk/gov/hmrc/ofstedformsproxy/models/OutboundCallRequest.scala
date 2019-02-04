@@ -21,12 +21,6 @@ import java.net.URL
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 
-
-import java.net.URL
-
-import play.api.libs.json.Reads._
-import play.api.libs.json._
-
 import scala.util._
 
 case class OutboundCallRequest(url: URL,
@@ -39,7 +33,7 @@ object OutboundCallRequest {
 
   private implicit val urlFormats = Format[URL](
     Reads { js =>
-      lazy val supportedProtocols = Seq("http", "https")
+      lazy val supportedProtocols = Seq("https")
       js.validate[String].map(s => Try(new URL(s))).flatMap {
         case Success(url) if supportedProtocols.contains(url.getProtocol) => JsSuccess(url)
         case Success(url) => JsError("unsupported protocol: " + url.getProtocol)
