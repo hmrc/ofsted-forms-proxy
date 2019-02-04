@@ -28,7 +28,7 @@ import scala.xml.XML._
 
 //TODO: do not inject the connector here, inject the service class
 @Singleton
-class OfstedFormsProxyController @Inject()(val messagesApi: MessagesApi, cc: CygnumConnector) extends FrontendController with I18nSupport {
+class OfstedFormsProxyController @Inject()(val messagesApi: MessagesApi) extends FrontendController with I18nSupport {
 
   implicit val ofstedCharset = Codec.utf_8
 
@@ -63,17 +63,12 @@ class OfstedFormsProxyController @Inject()(val messagesApi: MessagesApi, cc: Cyg
   //TODO: extract the id and send back as a JSON value
 
   def getUrn() = Action { implicit request =>
-    Ok("")
-//
-//    cc.getUrn().map{
-//      case \/-(xmlResponse) => {
-//        val dataResult = (xmlResponse \\ "GetDataResult").text
-//        val urn = (loadString(dataResult) \\ "URN").text
-//        Ok(Json.obj("urn" -> urn))
-//      }
-//      case -\/(f) => BadRequest(f)
-//    }
+    Ok("Got URN")
+  }
 
+  def submitForm() = Action {
+    implicit request =>
+      Ok("Submitted Form")
   }
 
 }

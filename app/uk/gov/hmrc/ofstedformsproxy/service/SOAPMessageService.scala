@@ -16,7 +16,8 @@
 
 package uk.gov.hmrc.ofstedformsproxy.service
 
-import java.io.{File, FileInputStream, FileOutputStream, IOException}
+import java.io._
+import java.nio.charset.StandardCharsets
 import java.security._
 import java.security.cert.{Certificate, CertificateEncodingException}
 import java.time.format.DateTimeFormatter
@@ -35,29 +36,40 @@ import javax.xml.parsers.ParserConfigurationException
 import javax.xml.soap._
 import javax.xml.transform.stream.StreamSource
 import org.w3c.dom.{DOMException, Document}
-import org.xml.sax.SAXException
+import org.xml.sax.{InputSource, SAXException}
 import play.api.Environment
 import scalaz._
+import uk.gov.hmrc.ofstedformsproxy.config.AppConfig
+import uk.gov.hmrc.ofstedformsproxy.models.ServiceType
+import uk.gov.hmrc.ofstedformsproxy.models.ServiceType.ServiceType
 
 import scala.util.{Failure, Success, Try}
+import scala.xml.{NodeSeq, XML}
 
 @ImplementedBy(classOf[SOAPMessageServiceImpl])
 trait SOAPMessageService {
 
-  def readInXMLPayload(path: String): String \/ Document
+  def buildGetUrnSOAPPayload(): String \/ String
 
-  def createSOAPEnvelope(document: Document): String \/ SOAPMessage
+  def buildFormSubmissionSOAPPayload(node: NodeSeq): String \/ String
 
-  def signSOAPMessage(soapMessage: SOAPMessage): String \/ SOAPMessage
+  //def makeSubmitFormPayload() :
 
-  def outputFile(soapMessage : SOAPMessage): String \/ Unit
-
-  def call(soapMessage : SOAPMessage) : String \/ Unit
+//  // TODO: remove these methods from this trait
+//  def readInXMLPayload(path: String): String \/ Document
+//
+//  def createSOAPEnvelope(document: Document): String \/ SOAPMessage
+//
+//  def signSOAPMessage(soapMessage: SOAPMessage): String \/ SOAPMessage
+//
+//  def outputFile(soapMessage: SOAPMessage): String \/ Unit //TODO: remove this
+//
+//  def call(soapMessage: SOAPMessage): String \/ Unit //TODO: remove this
 
 }
 
 @Singleton
-class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageService {
+class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) extends SOAPMessageService {
 
   val u0 = UUID.randomUUID.toString
   val u1 = u0 + "-1"
@@ -65,6 +77,83 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
 
   System.setProperty("javax.xml.soap.MessageFactory", "com.sun.xml.internal.messaging.saaj.soap.ver1_2.SOAPMessageFactory1_2Impl")
   System.setProperty("javax.xml.bind.JAXBContext", "com.sun.xml.internal.bind.v2.ContextFactory")
+
+  override def buildFormSubmissionSOAPPayload(node: NodeSeq): String \/ String = {
+    val result: String \/ String = for {
+      xmlDocument <- readInXMLPayload(node)
+      soapMessage <- createSOAPEnvelope(xmlDocument)
+      signedSoapMessage <- signSOAPMessage(soapMessage, ServiceType.SendData)
+    } yield convert(signedSoapMessage)
+
+    result match {
+      case \/-(d) => \/-(d)
+      case -\/(e) => -\/(e)
+    }
+
+  }
+
+  override def buildGetUrnSOAPPayload(): String \/ String = {
+
+    //TODO: process the request body
+    //TODO: call the post method via the connector interface
+    //TODO: the payload body needs to be a string representation
+    //TODO: construct the soap envelope
+    //TODO: construct the message
+    //TODO: process response
+    //TODO: extract the urn
+
+    val result: String \/ String = for {
+      xmlDocument <- readInXMLPayload("conf/xml/GetNewURN.xml") //TODO: use config file
+      soapMessage <- createSOAPEnvelope(xmlDocument)
+      signedSoapMessage <- signSOAPMessage(soapMessage, ServiceType.GetData)
+    } yield convert(signedSoapMessage)
+
+    result match {
+      case \/-(d) => \/-(d)
+      case -\/(e) => -\/(e)
+    }
+
+  }
+
+  private def createTempFileForData(data: SOAPMessage): File = {
+    val file = File.createTempFile(getClass.getSimpleName + "-0", ".tmp")
+    //    file.deleteOnExit() //TODO: test the scenario when this function is called we delete the file in the finally clause
+    val os = new FileOutputStream(file)
+    try {
+      data.writeTo(os)
+      file
+    } finally {
+      os.close()
+    }
+  }
+
+  private def convert(soapMessage: SOAPMessage): String = {
+    val file = File.createTempFile(getClass.getSimpleName, ".tmp")
+    val fos = new FileOutputStream(file)
+
+    soapMessage.writeTo(fos)
+    val xx = XML.loadFile(file)
+    val writer = new StringWriter
+    XML.write(writer, xx, StandardCharsets.UTF_8.toString, xmlDecl = true, null)
+    val k = writer.toString
+    println(k)
+    k
+  }
+
+  private def readInXMLPayload(path: NodeSeq): String \/ org.w3c.dom.Document = {
+
+    Try {
+      val dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance
+      dbFactory.setNamespaceAware(true)
+      dbFactory.newDocumentBuilder.parse(new InputSource(new StringReader(path.toString())))
+    }
+    match {
+      case Success(document) => \/-(document)
+      case Failure(e: ParserConfigurationException) => -\/(e.getMessage)
+      case Failure(e: SAXException) => -\/(e.getMessage)
+      case Failure(e: IOException) => -\/(e.getMessage)
+    }
+  }
 
   def readInXMLPayload(path: String): String \/ org.w3c.dom.Document = {
 
@@ -96,7 +185,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
 
     soapEnvelope.addNamespaceDeclaration("a", "http://www.w3.org/2005/08/addressing")
     soapEnvelope.addNamespaceDeclaration("u", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd")
-//    soapEnvelope.addNamespaceDeclaration("env", "http://schemas.xmlsoap.org/soap/envelope/")
+    //    soapEnvelope.addNamespaceDeclaration("env", "http://schemas.xmlsoap.org/soap/envelope/")
 
     // Add DOM object to SOAP body
     val soapBody = soapMessage.getSOAPBody
@@ -111,13 +200,13 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
     case Failure(e: DOMException) => -\/(e.getMessage)
   }
 
-  override def signSOAPMessage(soapMessage: SOAPMessage): String \/ SOAPMessage = {
+  def signSOAPMessage(soapMessage: SOAPMessage, action: ServiceType): String \/ SOAPMessage = {
 
     Try {
       val soapHeader: SOAPHeader = soapMessage.getSOAPHeader
       soapHeader.setPrefix("s")
 
-      addAction(soapHeader, soapMessage)
+      addAction(soapHeader, soapMessage, action)
 
       addMessageId(soapHeader)
 
@@ -249,11 +338,14 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
   }
 
   //TODO: wrap in Try
-  private def addAction(soapHeader: SOAPElement, soapMessage: SOAPMessage) = {
+  private def addAction(soapHeader: SOAPElement, soapMessage: SOAPMessage, serviceType: ServiceType) = {
     val action = soapHeader.addChildElement("Action", "a")
     val soapEnvelope = soapMessage.getSOAPPart.getEnvelope
     action.addAttribute(soapEnvelope.createName("mustUnderstand", "s", "http://www.w3.org/2003/05/soap-envelope"), "1")
-    action.addTextNode("http://tempuri.org/IGatewayOOServices/GetData") //TODO: needs dynamic
+    if (serviceType == ServiceType.GetData)
+      action.addTextNode("http://tempuri.org/IGatewayOOServices/GetData")
+    else
+      action.addTextNode("http://tempuri.org/IGatewayOOServices/SendData")
 
     action
   }
@@ -323,7 +415,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
     cert
   }
 
-  override def outputFile(soapMessage : SOAPMessage) : String \/ Unit = {
+  def outputFile(soapMessage: SOAPMessage): String \/ Unit = {
     Try {
       val outputFile = new File("/home/mikail/Tmp/Ofsted/playTest.xml")
       val fos = new FileOutputStream(outputFile)
@@ -336,7 +428,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment) extends SOAPMessageServ
   }
 
 
-  override def call(soapMessage: SOAPMessage): String \/ Unit = Try{
+  def call(soapMessage: SOAPMessage): String \/ Unit = Try {
     System.setProperty("javax.xml.soap.MessageFactory", "com.sun.xml.internal.messaging.saaj.soap.ver1_2.SOAPMessageFactory1_2Impl")
     System.setProperty("javax.xml.bind.JAXBContext", "com.sun.xml.internal.bind.v2.ContextFactory")
     val soapFile = new File("/home/mikail/Tmp/Ofsted/playTest.xml")

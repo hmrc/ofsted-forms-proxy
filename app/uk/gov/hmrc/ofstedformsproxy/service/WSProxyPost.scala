@@ -34,7 +34,7 @@ class WSProxyPost @Inject()(override val actorSystem: ActorSystem,
 
   override val configuration = Some(config.underlying)
   override val hooks: Seq[HttpHook] = NoneRequired
-  private def wsProxyServer: Option[WSProxyServer] = WSProxyConfiguration(s"${servicesConfig.env}.microservice.services.cygnum.proxy")
+  private def wsProxyServer: Option[WSProxyServer] = WSProxyConfiguration("microservice.services.cygnum.proxy")
 
   override def buildRequest[A](url: String)(implicit hc: HeaderCarrier): WSRequest = {
     wsProxyServer match {
