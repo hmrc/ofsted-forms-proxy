@@ -20,8 +20,7 @@ import javax.inject.Inject
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.BodyParser
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorBadRequest
-import uk.gov.hmrc.customs.api.common.controllers.ResponseContents
+
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.ofstedformsproxy.connectors.BaseConnector
 import uk.gov.hmrc.ofstedformsproxy.logging.OfstedFormProxyLogger
@@ -47,7 +46,7 @@ abstract class CygnumController @Inject() (baseConnector: BaseConnector,
     } yield ResponseContents("INVALID_JSON", errorMessage)
     logger.error("failed JSON schema validation")
 
-    errorBadRequest("Request failed schema validation").withErrors(contents: _*)
+    //errorBadRequest("Request failed schema validation").withErrors(contents: _*)
   }
 
 }
