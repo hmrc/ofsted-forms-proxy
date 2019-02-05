@@ -31,6 +31,7 @@ import uk.gov.hmrc.ofstedformsproxy.connectors.OutboundServiceConnector
 import uk.gov.hmrc.ofstedformsproxy.logging.OfstedFormProxyLogger
 import uk.gov.hmrc.ofstedformsproxy.models.OutboundCallRequest
 import uk.gov.hmrc.ofstedformsproxy.service.{AuditingService, SOAPMessageService}
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -54,11 +55,10 @@ import scala.xml.Elem
 class OutboundCallController @Inject()(outboundServiceConnector: OutboundServiceConnector,
                                        soapService: SOAPMessageService,
                                        logger: OfstedFormProxyLogger,
-                                       messagesApi: MessagesApi,
+                                       val messagesApi: MessagesApi,
                                        auditingService: AuditingService,
                                        appConfig: AppConfig)
-  extends CygnumController(outboundServiceConnector, logger, messagesApi) {
-
+  extends BaseController with I18nSupport with HeaderValidator{
 
   def submitForm(): Action[AnyContent] = Action.async {
     implicit request =>
@@ -162,5 +162,7 @@ class OutboundCallController @Inject()(outboundServiceConnector: OutboundService
     auditingService.auditFailedNotification(request = outboundCallRequest, Some(failureReason))
     CustomErrorResponses.badGatewayErrorResponses.JsonResult
   }
+
+  override val notificationLogger: OfstedFormProxyLogger = logger
 
 }
