@@ -24,7 +24,7 @@ import play.api.libs.json._
 import scala.util._
 
 case class OutboundCallRequest(url: URL,
-                               conversationId: String,
+                               //conversationId: String,
                                authHeaderToken: String,
                                outboundCallHeaders: Seq[Header],
                                xmlPayload: String)
