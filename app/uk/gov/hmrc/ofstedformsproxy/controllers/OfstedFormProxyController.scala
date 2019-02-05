@@ -52,15 +52,15 @@ import scala.xml.Elem
 //  //TODO: build pipeline
 
 @Singleton
-class OutboundCallController @Inject()(outboundServiceConnector: OutboundServiceConnector,
-                                       soapService: SOAPMessageService,
-                                       logger: OfstedFormProxyLogger,
-                                       val messagesApi: MessagesApi,
-                                       auditingService: AuditingService,
-                                       appConfig: AppConfig)
+class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServiceConnector,
+                                          soapService: SOAPMessageService,
+                                          logger: OfstedFormProxyLogger,
+                                          val messagesApi: MessagesApi,
+                                          auditingService: AuditingService,
+                                          appConfig: AppConfig)
   extends BaseController with I18nSupport with HeaderValidator{
 
-  def submitForm(): Action[AnyContent] = Action.async {
+  def submitForm(): Action[AnyContent] = validateAccept(contentTypeValidation).async {
     implicit request =>
       request.body.asXml match {
         case Some(p) => {

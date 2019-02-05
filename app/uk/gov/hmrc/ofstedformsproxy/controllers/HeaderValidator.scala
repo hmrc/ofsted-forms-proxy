@@ -18,34 +18,34 @@ package uk.gov.hmrc.ofstedformsproxy.controllers
 
 import play.api.http.{HeaderNames, MimeTypes}
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.ErrorAcceptHeaderInvalid
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.ErrorContentTypeHeaderInvalid
 import uk.gov.hmrc.ofstedformsproxy.logging.OfstedFormProxyLogger
 
 import scala.concurrent.Future
 
 trait HeaderValidator extends Results {
 
-  private lazy val validAcceptHeaders = Seq("application/xml; charset=utf-8")
+  private lazy val validContentTypes = Seq("application/xml")
 
-  val acceptHeaderValidation: (Option[String] => Boolean) = _ exists (validAcceptHeaders.contains(_))
+  val contentTypeValidation: (Option[String] => Boolean) = _ exists (validContentTypes.contains(_))
 
   val notificationLogger: OfstedFormProxyLogger
 
   def validateAccept(rules: Option[String] => Boolean): ActionBuilder[Request] = new ActionBuilder[Request] {
     def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]): Future[Result] = {
-      val logMessage = "Received XML payload"
+      val logMessage = "Received payload"
       val headers = request.headers.headers
       notificationLogger.debug(logMessage, headers)
 
-      val acceptHeader = HeaderNames.ACCEPT
-      val hasAccept = rules(request.headers.get(acceptHeader))
+      val contentTypeHeader = HeaderNames.CONTENT_TYPE
+      val hasContentType = rules(request.headers.get(contentTypeHeader))
 
-      if (hasAccept) {
-        notificationLogger.debug(s"$acceptHeader header passed validation", headers)
+      if (hasContentType) {
+        notificationLogger.debug(s"$contentTypeHeader header passed validation", headers)
         block(request)
       } else {
-        notificationLogger.debug(s"$acceptHeader header failed validation", headers)
-        Future.successful(ErrorAcceptHeaderInvalid.JsonResult)
+        notificationLogger.debug(s"$contentTypeHeader header failed validation", headers)
+        Future.successful(ErrorContentTypeHeaderInvalid.JsonResult)
       }
     }
   }
