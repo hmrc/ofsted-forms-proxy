@@ -31,7 +31,7 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
   lazy val getUrnXMLFileLocation : String = loadConfig("microservice.services.cygnum.getUrnXMLFileLocation")
   lazy val cygnumClientPassword : String = new String(Base64.getDecoder.decode(loadConfig("microservice.services.cygnum.client.base64KeystorePassword")))
   lazy val cygnumKeyStore : String = loadConfig("microservice.services.cygnum.client.base64Keystore")
-  lazy val cygnumKeyStorePrivateKey : String = new String(Base64.getDecoder.decode(loadConfig("microservice.services.cygnum.client.base64PrivateKey")))
+  lazy val cygnumPrivateKeyAlias : String = new String(Base64.getDecoder.decode(loadConfig("microservice.services.cygnum.client.base64PrivateKeyAlias")))
   lazy val cygnumUsername : String = new String(Base64.getDecoder.decode(loadConfig("microservice.services.cygnum.base64Username")))
   lazy val cygnumPassword : String = new String(Base64.getDecoder.decode(loadConfig("microservice.services.cygnum.base64Password")))
 }
