@@ -56,8 +56,7 @@ class AuditingService @Inject()(logger: NotificationLogger, servicesConfig: Serv
 
     implicit val carrier = HeaderCarrier()
 
-    val tags = Map(TransactionName -> transactionNameValue,
-      xConversationId -> request.conversationId)
+    val tags = Map(TransactionName -> transactionNameValue)
 
     val detail: JsObject = failureReason.fold(
       JsObject(Map[String, JsValue](

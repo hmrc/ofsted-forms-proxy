@@ -28,7 +28,7 @@ import scalaz.{-\/, \/-}
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.ofstedformsproxy.config.AppConfig
 import uk.gov.hmrc.ofstedformsproxy.connectors.{CygnumConnector, OutboundServiceConnector}
-import uk.gov.hmrc.ofstedformsproxy.logging.{LoggingHelper, NotificationLogger}
+import uk.gov.hmrc.ofstedformsproxy.logging.NotificationLogger
 import uk.gov.hmrc.ofstedformsproxy.models.OutboundCallRequest
 import uk.gov.hmrc.ofstedformsproxy.service.{AuditingService, SOAPMessageService}
 
@@ -48,7 +48,7 @@ class OutboundCallController @Inject()(outboundServiceConnector: OutboundService
   extends CygnumController(outboundServiceConnector, logger, messagesApi) {
 
 
-  def submitForm() = Action.async {
+  def submitForm(): Action[AnyContent] = Action.async {
     implicit request =>
 
       val payload = request.body.asXml
@@ -58,10 +58,10 @@ class OutboundCallController @Inject()(outboundServiceConnector: OutboundService
           soapService.buildFormSubmissionPayload(p) match {
             case \/-(formPayload) => {
               logger.debug(s"Constructed Send Data payload: ", url = appConfig.cygnumURL, payload = p.toString)
-              callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", "", Seq.empty, formPayload), processFormSubmissionResponse)
+              callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, formPayload), processFormSubmissionResponse)
             }
             case -\/(error) => {
-              logger.error("Failed to build the Send Data SOAP Payload")
+              logger.error("Failed to build the form submission SOAP XML payload")
               Future.successful(BadRequest(error))
             }
           }
@@ -70,12 +70,12 @@ class OutboundCallController @Inject()(outboundServiceConnector: OutboundService
       }
   }
 
-  def getUrn() = Action.async {
+  def getUrn(): Action[AnyContent] = Action.async {
     implicit request =>
       soapService.buildGetURNPayload() match {
         case \/-(getUrnPayload) => {
           logger.debug(s"Constructed GetURN payload: ", url = appConfig.cygnumURL, payload = getUrnPayload)
-          callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", "", Seq.empty, getUrnPayload), processGetURNResponse)
+          callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, getUrnPayload), processGetURNResponse)
         }
         case -\/(error) => {
           logger.error("Failed to build the GetURN SOAP Payload")
@@ -85,65 +85,72 @@ class OutboundCallController @Inject()(outboundServiceConnector: OutboundService
   }
 
   //TODO: pull out error messages and return in the JSON
-  private def processGetURNResponse(response: HttpResponse) = {
+  private def processGetURNResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Result = {
     val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
     val tmp: String = (xmlResponse \\ "GetDataResult").text
     val urn: String = (scala.xml.XML.loadString(tmp) \\ "URN").text
 
-    if (!urn.isEmpty)
+    if (!urn.isEmpty) {
+      logger.debug(s"Get Data service full response: ${xmlResponse.toString}: ", Seq.empty)
       Ok(Json.obj("urn" -> urn))
-    else
-      Conflict
+    }
+    else {
+      logger.error(s"Get Data service response: ${xmlResponse.toString}")
+      BadRequest("Failed to get URN")
+    }
   }
 
   //TODO: pull out error messages and return in the JSON
-  private def processFormSubmissionResponse(response: HttpResponse) = {
+  private def processFormSubmissionResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Result = {
     val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
     val tmp: String = (xmlResponse \\ "SendDataResult").text
     val status: String = (scala.xml.XML.loadString(tmp) \\ "Status").text
 
-    if (!status.isEmpty)
+    if (!status.isEmpty) {
+      logger.debug(s"Send Data service full response: ${xmlResponse.toString}: ", Seq.empty)
       Ok(Json.obj("status" -> status))
-    else
-      Conflict
+    }
+    else {
+      logger.error(s"Send Data service response: ${xmlResponse.toString}")
+      BadRequest("Failed to submit form")
+    }
   }
 
   private def callOutboundService(outboundCallRequest: OutboundCallRequest, responseHandler: HttpResponse => Result)(implicit hc: HeaderCarrier): Future[Result] = {
-    val logPrefix = LoggingHelper.logMsgPrefix(outboundCallRequest.conversationId)
     val startTime = LocalDateTime.now
     outboundServiceConnector.callOutboundService(outboundCallRequest)
       .map { response =>
-        logCallDuration(startTime, logPrefix)
-        logger.info(s"${logPrefix}Outbound call succeeded")
+        logCallDuration(startTime)
+        logger.info(s"Outbound call succeeded")
         auditingService.auditSuccessfulNotification(outboundCallRequest)
         responseHandler(response)
       }.recover {
       case upstream4xx: Upstream4xxResponse =>
-        logCallDuration(startTime, logPrefix)
-        val logMsg = s"${logPrefix}Outbound call failed with Upstream4xxResponse status=${upstream4xx.upstreamResponseCode}"
+        logCallDuration(startTime)
+        val logMsg = s"Outbound call failed with Upstream4xxResponse status=${upstream4xx.upstreamResponseCode}"
         recovery(outboundCallRequest, logMsg, s"http status ${upstream4xx.upstreamResponseCode.toString}", upstream4xx)
       case upstream5xx: Upstream5xxResponse =>
-        logCallDuration(startTime, logPrefix)
-        val logMsg = s"${logPrefix}Outbound call failed with Upstream5xxResponse status=${upstream5xx.upstreamResponseCode}"
+        logCallDuration(startTime)
+        val logMsg = s"Outbound call failed with Upstream5xxResponse status=${upstream5xx.upstreamResponseCode}"
         recovery(outboundCallRequest, logMsg, s"http status ${upstream5xx.upstreamResponseCode.toString}", upstream5xx)
       case httpException: HttpException =>
-        logCallDuration(startTime, logPrefix)
-        val logMsg = s"${logPrefix}Outbound call failed with response status=${httpException.responseCode}"
+        logCallDuration(startTime)
+        val logMsg = s"Outbound call failed with response status=${httpException.responseCode}"
         recovery(outboundCallRequest, logMsg, s"http status ${httpException.responseCode.toString}", httpException)
       case NonFatal(thr) =>
-        logCallDuration(startTime, logPrefix)
-        val logMsg = s"${logPrefix}Outbound call failed due to ${thr.getMessage}"
+        logCallDuration(startTime)
+        val logMsg = s"Outbound call failed due to ${thr.getMessage}"
         recovery(outboundCallRequest, logMsg, "http status unknown", thr)
     }
   }
 
-  protected def logCallDuration(startTime: LocalDateTime, logPrefix: String)(implicit hc: HeaderCarrier): Unit = {
+  protected def logCallDuration(startTime: LocalDateTime)(implicit hc: HeaderCarrier): Unit = {
     val callDuration = ChronoUnit.MILLIS.between(startTime, LocalDateTime.now)
-    logger.info(s"${logPrefix}Outbound call duration was ${callDuration} ms")
+    logger.info(s"Outbound call duration was ${callDuration} ms")
   }
 
 
-  private def recovery(outboundCallRequest: OutboundCallRequest, logMsg: String, failureReason: String, thr: Throwable)(implicit hc: HeaderCarrier) = {
+  private def recovery(outboundCallRequest: OutboundCallRequest, logMsg: String, failureReason: String, thr: Throwable)(implicit hc: HeaderCarrier): Result = {
     logger.error(logMsg, thr)
     auditingService.auditFailedNotification(request = outboundCallRequest, Some(failureReason))
     CustomErrorResponses.badGatewayErrorResponses.JsonResult
