@@ -19,7 +19,7 @@ package uk.gov.hmrc.ofstedformsproxy.controllers
 import play.api.http.{HeaderNames, MimeTypes}
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.ErrorAcceptHeaderInvalid
-import uk.gov.hmrc.ofstedformsproxy.logging.NotificationLogger
+import uk.gov.hmrc.ofstedformsproxy.logging.OfstedFormProxyLogger
 
 import scala.concurrent.Future
 
@@ -29,7 +29,7 @@ trait HeaderValidator extends Results {
 
   val acceptHeaderValidation: (Option[String] => Boolean) = _ exists (validAcceptHeaders.contains(_))
 
-  val notificationLogger: NotificationLogger
+  val notificationLogger: OfstedFormProxyLogger
 
   def validateAccept(rules: Option[String] => Boolean): ActionBuilder[Request] = new ActionBuilder[Request] {
     def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]): Future[Result] = {

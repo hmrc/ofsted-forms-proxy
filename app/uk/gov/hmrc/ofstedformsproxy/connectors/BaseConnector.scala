@@ -18,7 +18,7 @@ package uk.gov.hmrc.ofstedformsproxy.connectors
 
 import com.google.inject.Inject
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.ofstedformsproxy.logging.NotificationLogger
+import uk.gov.hmrc.ofstedformsproxy.logging.OfstedFormProxyLogger
 import uk.gov.hmrc.ofstedformsproxy.service.WSProxyPost
 
 import scala.concurrent.Future
@@ -26,7 +26,7 @@ import scala.util.{Failure, Success}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-abstract class BaseConnector @Inject()(outboundProxy: WSProxyPost, logger: NotificationLogger) {
+abstract class BaseConnector @Inject()(outboundProxy: WSProxyPost, logger: OfstedFormProxyLogger) {
 
   protected lazy implicit val emptyHC: HeaderCarrier = HeaderCarrier()
 

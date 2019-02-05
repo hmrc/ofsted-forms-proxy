@@ -21,14 +21,14 @@ import com.google.inject.Inject
 import javax.inject.Singleton
 import play.mvc.Http.HeaderNames.CONTENT_TYPE
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.ofstedformsproxy.logging.NotificationLogger
+import uk.gov.hmrc.ofstedformsproxy.logging.OfstedFormProxyLogger
 import uk.gov.hmrc.ofstedformsproxy.models.OutboundCallRequest
 import uk.gov.hmrc.ofstedformsproxy.service.WSProxyPost
 
 import scala.concurrent.Future
 
 @Singleton
-class OutboundServiceConnector @Inject()(outboundProxy: WSProxyPost, logger: NotificationLogger) extends BaseConnector(outboundProxy, logger) {
+class OutboundServiceConnector @Inject()(outboundProxy: WSProxyPost, logger: OfstedFormProxyLogger) extends BaseConnector(outboundProxy, logger) {
 
   def callOutboundService(request: OutboundCallRequest): Future[HttpResponse] = {
     val urlString = request.url.toString

@@ -18,7 +18,6 @@ package uk.gov.hmrc.ofstedformsproxy.logging
 
 import play.api.http.HeaderNames.AUTHORIZATION
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.ofstedformsproxy.controllers.CustomHeaderNames
 import uk.gov.hmrc.ofstedformsproxy.models.SeqOfHeader
 
 object LoggingHelper {
@@ -26,14 +25,7 @@ object LoggingHelper {
   private val headerOverwriteValue = "value-not-logged"
   private val headersToOverwrite = Set(AUTHORIZATION)
 
-  def logMsgPrefix(conversationId: String): String =
-    s"[conversationId=$conversationId] "
-
   def formatError(msg: String)(implicit hc: HeaderCarrier): String = {
-    formatInfo(msg)
-  }
-
-  def formatWarn(msg: String)(implicit hc: HeaderCarrier): String = {
     formatInfo(msg)
   }
 
@@ -43,27 +35,22 @@ object LoggingHelper {
   }
 
   def formatInfo(msg: String, headers: SeqOfHeader): String = {
-    s"${formatLogPrefix(headers)} $msg"
+    s"${headers.toString} $msg"
   }
 
   def formatDebug(msg: String, headers: SeqOfHeader): String = {
-    s"${formatLogPrefix(headers)} $msg\nheaders=${overwriteHeaderValues(headers,headersToOverwrite - AUTHORIZATION)}"
+    s"${headers.toString} $msg\nheaders=${overwriteHeaderValues(headers, headersToOverwrite - AUTHORIZATION)}"
   }
 
   def formatDebug(msg: String, maybeUrl: Option[String] = None, maybePayload: Option[String] = None)(implicit hc: HeaderCarrier): String = {
-    val headers = hc.headers
+    val headers: Seq[(String, String)] = hc.headers
     val urlPart = maybeUrl.fold("")(url => s" url=$url")
     val payloadPart = maybePayload.fold("")(payload => s"\npayload=\n$payload")
-    s"${formatLogPrefix(headers)} $msg$urlPart\nheaders=${overwriteHeaderValues(headers,headersToOverwrite - AUTHORIZATION)}$payloadPart"
-  }
-
-  private def formatLogPrefix(headers: SeqOfHeader): String = {
-    val maybeConversationId = findHeaderValue(CustomHeaderNames.X_CONVERSATION_ID_HEADER_NAME, headers)
-    maybeConversationId.fold("")(conversationId => s"[conversationId=$conversationId]")
+    s"${headers.toString} $msg$urlPart\nheaders=${overwriteHeaderValues(headers, headersToOverwrite - AUTHORIZATION)}$payloadPart"
   }
 
   private def findHeaderValue(headerName: String, headers: SeqOfHeader): Option[String] = {
-    headers.collectFirst{
+    headers.collectFirst {
       case header if header._1.equalsIgnoreCase(headerName) => header._2
     }
   }

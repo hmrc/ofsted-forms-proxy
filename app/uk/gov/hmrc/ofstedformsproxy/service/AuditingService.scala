@@ -20,7 +20,7 @@ import javax.inject.Singleton
 import play.api.libs.json.{JsObject, JsString, JsValue}
 import uk.gov.hmrc.customs.api.common.config.ServicesConfig
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.ofstedformsproxy.logging.{LoggingHelper, NotificationLogger}
+import uk.gov.hmrc.ofstedformsproxy.logging.OfstedFormProxyLogger
 import uk.gov.hmrc.ofstedformsproxy.models.OutboundCallRequest
 import uk.gov.hmrc.play.audit.EventKeys.TransactionName
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
 @Singleton
-class AuditingService @Inject()(logger: NotificationLogger, servicesConfig: ServicesConfig, auditConnector: AuditConnector) {
+class AuditingService @Inject()(logger: OfstedFormProxyLogger, servicesConfig: ServicesConfig, auditConnector: AuditConnector) {
 
   private val appName = "ofsted-forms-proxy"
   private val transactionNameValue = "ofsted-forms-proxy-outbound-call"

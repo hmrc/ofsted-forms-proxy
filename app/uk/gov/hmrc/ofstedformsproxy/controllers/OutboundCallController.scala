@@ -28,7 +28,7 @@ import scalaz.{-\/, \/-}
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.ofstedformsproxy.config.AppConfig
 import uk.gov.hmrc.ofstedformsproxy.connectors.{CygnumConnector, OutboundServiceConnector}
-import uk.gov.hmrc.ofstedformsproxy.logging.NotificationLogger
+import uk.gov.hmrc.ofstedformsproxy.logging.OfstedFormProxyLogger
 import uk.gov.hmrc.ofstedformsproxy.models.OutboundCallRequest
 import uk.gov.hmrc.ofstedformsproxy.service.{AuditingService, SOAPMessageService}
 
@@ -41,7 +41,7 @@ import scala.xml.Elem
 class OutboundCallController @Inject()(outboundServiceConnector: OutboundServiceConnector,
                                        soapService: SOAPMessageService,
                                        cc: CygnumConnector,
-                                       logger: NotificationLogger,
+                                       logger: OfstedFormProxyLogger,
                                        messagesApi: MessagesApi,
                                        auditingService: AuditingService,
                                        appConfig: AppConfig)
