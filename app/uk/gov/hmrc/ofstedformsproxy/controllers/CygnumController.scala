@@ -24,18 +24,18 @@ import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorBadRequest
 import uk.gov.hmrc.customs.api.common.controllers.ResponseContents
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.ofstedformsproxy.connectors.BaseConnector
-import uk.gov.hmrc.ofstedformsproxy.logging.NotificationLogger
+import uk.gov.hmrc.ofstedformsproxy.logging.OfstedFormProxyLogger
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Try
 
 abstract class CygnumController @Inject() (baseConnector: BaseConnector,
-                                            logger: NotificationLogger,
-                                            val messagesApi: MessagesApi)
+                                           logger: OfstedFormProxyLogger,
+                                           val messagesApi: MessagesApi)
   extends BaseController with I18nSupport with HeaderValidator {
 
-  override val notificationLogger: NotificationLogger = logger
+  override val notificationLogger: OfstedFormProxyLogger = logger
   protected val nonJsonBodyErrorMessage = "Request does not contain a valid JSON body"
   protected def tryJsonParser: BodyParser[Try[JsValue]] = parse.tolerantText.map(text => Try(Json.parse(text)))
 
