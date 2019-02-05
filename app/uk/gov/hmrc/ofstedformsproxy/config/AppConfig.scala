@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.ofstedformsproxy.config
 
+import java.util.Base64
+
 import javax.inject.{Inject, Singleton}
 import play.api.Mode.Mode
 import play.api.{Configuration, Environment}
@@ -25,6 +27,11 @@ import uk.gov.hmrc.play.config.ServicesConfig
 class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: Environment) extends ServicesConfig {
   override protected def mode: Mode = environment.mode
   private def loadConfig(key: String) = runModeConfiguration.getString(key).getOrElse(throw new Exception(s"Missing configuration key: $key"))
-  lazy val cygnumURL : String = loadConfig(s"microservice.services.cygnum.url")
-  lazy val getUrnXMLBody : String = loadConfig("microservice.services.cygnum.getUrnXMLPayload")
+  lazy val cygnumURL : String = loadConfig("microservice.services.cygnum.url")
+  lazy val getUrnXMLFileLocation : String = loadConfig("microservice.services.cygnum.getUrnXMLFileLocation")
+  lazy val cygnumClientPassword : String = new String(Base64.getDecoder.decode(loadConfig("microservice.services.cygnum.client.base64KeystorePassword")))
+  lazy val cygnumKeyStore : String = loadConfig("microservice.services.cygnum.client.base64Keystore")
+  lazy val cygnumKeyStorePrivateKey : String = new String(Base64.getDecoder.decode(loadConfig("microservice.services.cygnum.client.base64PrivateKey")))
+  lazy val cygnumUsername : String = new String(Base64.getDecoder.decode(loadConfig("microservice.services.cygnum.base64Username")))
+  lazy val cygnumPassword : String = new String(Base64.getDecoder.decode(loadConfig("microservice.services.cygnum.base64Password")))
 }
