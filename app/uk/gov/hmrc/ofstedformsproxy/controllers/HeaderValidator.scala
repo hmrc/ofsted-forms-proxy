@@ -25,7 +25,7 @@ import scala.concurrent.Future
 
 trait HeaderValidator extends Results {
 
-  private lazy val validAcceptHeaders = Seq("application/soap+xml; charset=utf-8")
+  private lazy val validAcceptHeaders = Seq("application/xml; charset=utf-8")
 
   val acceptHeaderValidation: (Option[String] => Boolean) = _ exists (validAcceptHeaders.contains(_))
 
@@ -33,7 +33,7 @@ trait HeaderValidator extends Results {
 
   def validateAccept(rules: Option[String] => Boolean): ActionBuilder[Request] = new ActionBuilder[Request] {
     def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]): Future[Result] = {
-      val logMessage = "Received notification"
+      val logMessage = "Received XML payload"
       val headers = request.headers.headers
       notificationLogger.debug(logMessage, headers)
 

@@ -27,7 +27,7 @@ import play.api.mvc._
 import scalaz.{-\/, \/-}
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.ofstedformsproxy.config.AppConfig
-import uk.gov.hmrc.ofstedformsproxy.connectors.{CygnumConnector, OutboundServiceConnector}
+import uk.gov.hmrc.ofstedformsproxy.connectors.OutboundServiceConnector
 import uk.gov.hmrc.ofstedformsproxy.logging.OfstedFormProxyLogger
 import uk.gov.hmrc.ofstedformsproxy.models.OutboundCallRequest
 import uk.gov.hmrc.ofstedformsproxy.service.{AuditingService, SOAPMessageService}
@@ -37,10 +37,22 @@ import scala.concurrent.Future
 import scala.util.control.NonFatal
 import scala.xml.Elem
 
+//  //TODO: Add the AuthModule ???
+//  //TODO: Play Crypto Secret
+//  //TODO: Add Prod Router
+//  //TODO: set up kibana metrics
+//  //TODO: set up service manager configuration
+//  //TODO: set up app-base-config
+//  //TODO: set up app-common-config
+//  //TODO: set up app-development-config
+//  //TODO: set up app-staging-config
+//  //TODO: set up app-qa-config
+//  //TODO: set up app-production-config
+//  //TODO: build pipeline
+
 @Singleton
 class OutboundCallController @Inject()(outboundServiceConnector: OutboundServiceConnector,
                                        soapService: SOAPMessageService,
-                                       cc: CygnumConnector,
                                        logger: OfstedFormProxyLogger,
                                        messagesApi: MessagesApi,
                                        auditingService: AuditingService,
@@ -50,10 +62,7 @@ class OutboundCallController @Inject()(outboundServiceConnector: OutboundService
 
   def submitForm(): Action[AnyContent] = Action.async {
     implicit request =>
-
-      val payload = request.body.asXml
-
-      payload match {
+      request.body.asXml match {
         case Some(p) => {
           soapService.buildFormSubmissionPayload(p) match {
             case \/-(formPayload) => {
@@ -66,7 +75,7 @@ class OutboundCallController @Inject()(outboundServiceConnector: OutboundService
             }
           }
         }
-        case None => Future.successful(Ok(""))
+        case None => Future.successful(BadRequest("Failed to parse XML payload"))
       }
   }
 
@@ -84,7 +93,6 @@ class OutboundCallController @Inject()(outboundServiceConnector: OutboundService
       }
   }
 
-  //TODO: pull out error messages and return in the JSON
   private def processGetURNResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Result = {
     val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
     val tmp: String = (xmlResponse \\ "GetDataResult").text
@@ -100,7 +108,6 @@ class OutboundCallController @Inject()(outboundServiceConnector: OutboundService
     }
   }
 
-  //TODO: pull out error messages and return in the JSON
   private def processFormSubmissionResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Result = {
     val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
     val tmp: String = (xmlResponse \\ "SendDataResult").text
