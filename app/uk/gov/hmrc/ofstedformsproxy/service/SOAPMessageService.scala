@@ -216,7 +216,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     val keystore = KeyStore.getInstance("jks")
     val (file, _) = createTempFileForData(appConfig.cygnumKeyStore)
     keystore.load(new FileInputStream(file), password)
-    keystore.getKey(appConfig.cygnumKeyStorePrivateKey, password).asInstanceOf[PrivateKey]
+    keystore.getKey(appConfig.cygnumPrivateKeyAlias, password).asInstanceOf[PrivateKey]
   }
 
   private def addSecurityToken(signature: SOAPElement): SOAPElement = {
@@ -343,7 +343,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     val keystore = KeyStore.getInstance("jks")
     val (file, _) = createTempFileForData(appConfig.cygnumKeyStore)
     keystore.load(new FileInputStream(file), password)
-    keystore.getCertificate(appConfig.cygnumKeyStorePrivateKey) //TODO: rename to alias??
+    keystore.getCertificate(appConfig.cygnumPrivateKeyAlias)
   }
 
 }
