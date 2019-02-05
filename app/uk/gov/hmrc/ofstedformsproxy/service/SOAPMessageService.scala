@@ -47,6 +47,7 @@ import scala.xml.{NodeSeq, XML}
 @ImplementedBy(classOf[SOAPMessageServiceImpl])
 trait SOAPMessageService {
   def buildGetURNPayload(): String \/ String
+
   def buildFormSubmissionPayload(node: NodeSeq): String \/ String
 }
 
@@ -75,7 +76,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
 
   override def buildGetURNPayload(): String \/ String = {
     val result: String \/ String = for {
-      xmlDocument <- readInXMLPayload("conf/xml/GetNewURN.xml") //TODO: use config file
+      xmlDocument <- readInXMLFilePayload(appConfig.getUrnXMLFileLocation)
       soapMessage <- createSOAPEnvelope(xmlDocument)
       signedSoapMessage <- signSOAPMessage(soapMessage, GetData)
     } yield stringifySoapMessage(signedSoapMessage)
@@ -87,18 +88,6 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
 
   }
 
-  private def createTempFileForData(data: SOAPMessage): File = {
-    val file = File.createTempFile(getClass.getSimpleName + "-0", ".tmp")
-    file.deleteOnExit()
-    val os = new FileOutputStream(file)
-    try {
-      data.writeTo(os)
-      file
-    } finally {
-      os.close()
-    }
-  }
-
   private def stringifySoapMessage(soapMessage: SOAPMessage): String = {
     val file = File.createTempFile(getClass.getSimpleName, ".tmp")
     val fos = new FileOutputStream(file)
@@ -107,13 +96,10 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     val xx = XML.loadFile(file)
     val writer = new StringWriter
     XML.write(writer, xx, StandardCharsets.UTF_8.toString, xmlDecl = true, null)
-    val k = writer.toString
-    println(k)
-    k
+    writer.toString
   }
 
   private def readInXMLPayload(path: NodeSeq): String \/ org.w3c.dom.Document = {
-
     Try {
       val dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance
       dbFactory.setNamespaceAware(true)
@@ -127,8 +113,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     }
   }
 
-  def readInXMLPayload(path: String): String \/ org.w3c.dom.Document = {
-
+  private def readInXMLFilePayload(path: String): String \/ org.w3c.dom.Document = {
     env.getExistingFile(path) match {
       case Some(xml) => Try {
         val dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance
@@ -147,34 +132,34 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     }
   }
 
-  def createSOAPEnvelope(xmlDocument: Document): String \/ SOAPMessage = Try {
-    // Create SOAP Message
-    val messageFactory = MessageFactory.newInstance
-    val soapMessage = messageFactory.createMessage
-    val soapEnvelope = soapMessage.getSOAPPart.getEnvelope
-    soapEnvelope.setPrefix("s")
-    soapEnvelope.removeNamespaceDeclaration("SOAP-ENV")
+  private def createSOAPEnvelope(xmlDocument: Document): String \/ SOAPMessage =
+    Try {
+      // Create SOAP Message
+      val messageFactory = MessageFactory.newInstance
+      val soapMessage = messageFactory.createMessage
+      val soapEnvelope = soapMessage.getSOAPPart.getEnvelope
+      soapEnvelope.setPrefix("s")
+      soapEnvelope.removeNamespaceDeclaration("SOAP-ENV")
 
-    soapEnvelope.addNamespaceDeclaration("a", "http://www.w3.org/2005/08/addressing")
-    soapEnvelope.addNamespaceDeclaration("u", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd")
+      soapEnvelope.addNamespaceDeclaration("a", "http://www.w3.org/2005/08/addressing")
+      soapEnvelope.addNamespaceDeclaration("u", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd")
 
-    // Add DOM object to SOAP body
-    val soapBody = soapMessage.getSOAPBody
-    soapBody.setPrefix("s")
-    soapBody.addDocument(xmlDocument)
-    soapBody.addAttribute(soapEnvelope.createName("Id", "u", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"), "_1")
-    soapMessage
+      // Add DOM object to SOAP body
+      val soapBody = soapMessage.getSOAPBody
+      soapBody.setPrefix("s")
+      soapBody.addDocument(xmlDocument)
+      soapBody.addAttribute(soapEnvelope.createName("Id", "u", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"), "_1")
+      soapMessage
 
-  } match {
-    case Success(soapMessage) => \/-(soapMessage)
-    case Failure(e: SOAPException) => -\/(e.getMessage)
-    case Failure(e: DOMException) => -\/(e.getMessage)
-  }
+    } match {
+      case Success(soapMessage) => \/-(soapMessage)
+      case Failure(e: SOAPException) => -\/(e.getMessage)
+      case Failure(e: DOMException) => -\/(e.getMessage)
+    }
 
-  def signSOAPMessage(soapMessage: SOAPMessage, action: ServiceType): String \/ SOAPMessage = {
+  private def signSOAPMessage(soapMessage: SOAPMessage, action: ServiceType): String \/ SOAPMessage = {
 
-    Try
-    {
+    Try {
       val soapHeader: SOAPHeader = soapMessage.getSOAPHeader
       soapHeader.setPrefix("s")
 
@@ -188,7 +173,6 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
 
       val securityElement = addSecurity(soapHeader, soapMessage)
 
-      //TODO: needs to come from the CustomWSConfigParser
       val cert = getCertificate
 
       val timestamp = addTimestamp(securityElement, soapMessage)
@@ -213,27 +197,29 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
 
   }
 
-  @throws[Exception]
-  private def getKeyFormCert = {
-    val password = "tdLK!PEV8}Gb5CM"
-    // Get cert password.
-    // (i) Get byte array of password
-    val passwordByte = password.getBytes
-    // (ii) Get MD5 Hash of byte array
-    val digest = java.security.MessageDigest.getInstance("MD5")
-    val passwordHashed = digest.digest(passwordByte)
-    // (iii) Base64 encode hashed byte array
-    val passwordHashedBase64 = Base64.getEncoder.encodeToString(passwordHashed)
-    // (iv) Open the cert using KeyStore
-    val keystore = KeyStore.getInstance("jks")
-    keystore.load(new FileInputStream(new File("/home/mikail/Tmp/Ofsted/ofsted.jks")), password.toCharArray)
-    // (v) Extract Private Key
-    val key = keystore.getKey("le-externalextranetuser!00282yearsha22003template!0029-7c3ba8e1-ea15-421f-bd7a-a3cfea301c83", password.toCharArray).asInstanceOf[PrivateKey]
-    key
+  def createTempFileForData(data: String): (String, Array[Byte]) = {
+    val file = File.createTempFile(getClass.getSimpleName, ".tmp")
+    file.deleteOnExit()
+    val os = new FileOutputStream(file)
+    try {
+      val bytes = Base64.getDecoder.decode(data.trim)
+      os.write(bytes)
+      os.flush()
+      file.getAbsolutePath → bytes
+    } finally {
+      os.close()
+    }
   }
 
-  @throws[SOAPException]
-  private def addSecurityToken(signature: SOAPElement) = {
+  private def getKeyFormCert: PrivateKey = {
+    val password = appConfig.cygnumClientPassword.toCharArray
+    val keystore = KeyStore.getInstance("jks")
+    val (file, _) = createTempFileForData(appConfig.cygnumKeyStore)
+    keystore.load(new FileInputStream(file), password)
+    keystore.getKey(appConfig.cygnumKeyStorePrivateKey, password).asInstanceOf[PrivateKey]
+  }
+
+  private def addSecurityToken(signature: SOAPElement): SOAPElement = {
     val securityTokenReference = signature.addChildElement("SecurityTokenReference", "o")
     val reference = securityTokenReference.addChildElement("Reference", "o")
     reference.setAttribute("URI", String.format("#uuid-%s", ID2))
@@ -241,8 +227,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     securityTokenReference
   }
 
-  //TODO: wrap in Try
-  private def addSignature(securityElement: SOAPElement, soapBody: SOAPBody, timestamp: SOAPElement) = { // Get private key from ROS digital certificate
+  private def addSignature(securityElement: SOAPElement, soapBody: SOAPBody, timestamp: SOAPElement): SOAPElement = {
     val key = getKeyFormCert
     val securityTokenReference = addSecurityToken(securityElement)
     // Add signature
@@ -250,7 +235,6 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     securityElement
   }
 
-  @throws[Exception]
   private def createDetachedSignature(signatureElement: SOAPElement, privateKey: PrivateKey, securityTokenReference: SOAPElement, soapBody: SOAPBody, timestamp: SOAPElement): Unit = {
     val providerName = System.getProperty("jsr105Provider", "org.jcp.xml.dsig.internal.dom.XMLDSigRI")
     val xmlSignatureFactory = XMLSignatureFactory.getInstance("DOM", Class.forName(providerName).newInstance.asInstanceOf[Provider])
@@ -270,9 +254,6 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     val sm = xmlSignatureFactory.newSignatureMethod("http://www.w3.org/2000/09/xmldsig#rsa-sha1", null)
     val signedInfo = xmlSignatureFactory.newSignedInfo(cm, sm, refList)
     val signContext = new DOMSignContext(privateKey, signatureElement)
-    // signContext.setDefaultNamespacePrefix("ds");
-    //signContext.putNamespacePrefix("http://www.w3.org/2000/09/xmldsig#", "ds");
-    //These are required for new Java versions
     signContext.setIdAttributeNS(soapBody, "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd", "Id")
     signContext.setIdAttributeNS(timestamp, "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd", "Id")
     val keyFactory = KeyInfoFactory.getInstance
@@ -283,8 +264,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     signature.sign(signContext)
   }
 
-  //TODO: wrap in Try
-  private def addBinarySecurityToken(securityElement: SOAPElement, cert: Certificate) = { // Get byte array of cert.
+  private def addBinarySecurityToken(securityElement: SOAPElement, cert: Certificate): SOAPElement = {
     val certByte = cert.getEncoded
     // Add the Binary Security Token element
     val binarySecurityToken = securityElement.addChildElement("BinarySecurityToken", "o")
@@ -295,8 +275,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     securityElement
   }
 
-  //TODO: wrap in Try
-  private def addTimestamp(securityElement: SOAPElement, soapMessage: SOAPMessage) = {
+  private def addTimestamp(securityElement: SOAPElement, soapMessage: SOAPMessage): SOAPElement = {
     val timestamp = securityElement.addChildElement("Timestamp", "u")
     val soapEnvelope = soapMessage.getSOAPPart.getEnvelope
     timestamp.addAttribute(soapEnvelope.createName("Id", "u", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"), "_0")
@@ -304,13 +283,10 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     val timeStampFormatter = DateTimeFormatter.ofPattern(DATE_TIME_PATTERN)
     timestamp.addChildElement("Created", "u").setValue(timeStampFormatter.format(ZonedDateTime.now.toInstant.atZone(ZoneId.of("UTC"))))
     timestamp.addChildElement("Expires", "u").setValue(timeStampFormatter.format(ZonedDateTime.now.plusSeconds(300).toInstant.atZone(ZoneId.of("UTC"))))
-    //        timestamp.addChildElement("Created", "u").setValue("2019-01-07T11:08:30.000Z");
-    //        timestamp.addChildElement("Expires", "u").setValue("2019-01-07T11:12:35.000Z");
     timestamp
   }
 
-  //TODO: wrap in Try
-  private def addAction(soapHeader: SOAPElement, soapMessage: SOAPMessage, serviceType: ServiceType) = {
+  private def addAction(soapHeader: SOAPElement, soapMessage: SOAPMessage, serviceType: ServiceType): SOAPElement = {
     val action = soapHeader.addChildElement("Action", "a")
     val soapEnvelope = soapMessage.getSOAPPart.getEnvelope
     action.addAttribute(soapEnvelope.createName("mustUnderstand", "s", "http://www.w3.org/2003/05/soap-envelope"), "1")
@@ -322,68 +298,52 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     action
   }
 
-  //TODO: wrap in Try
-  private def addMessageId(soapHeader: SOAPElement) = {
+  private def addMessageId(soapHeader: SOAPElement): SOAPElement = {
     val messageId = soapHeader.addChildElement("MessageID", "a")
     messageId.addTextNode(String.format("urn:uuid:%s", UUID.randomUUID.toString))
     messageId
   }
 
-  //TODO: wrap in Try
-  private def addReplyTo(soapHeader: SOAPElement) = {
+  private def addReplyTo(soapHeader: SOAPElement): SOAPElement = {
     val replyTo = soapHeader.addChildElement("ReplyTo", "a")
     val address = replyTo.addChildElement("Address", "a")
     address.addTextNode("http://www.w3.org/2005/08/addressing/anonymous")
     replyTo
   }
 
-  //TODO: wrap in Try
-  private def addTo(soapHeader: SOAPElement, soapMessage: SOAPMessage) = {
+  private def addTo(soapHeader: SOAPElement, soapMessage: SOAPMessage): SOAPElement = {
     val to = soapHeader.addChildElement("To", "a")
     val soapEnvelope = soapMessage.getSOAPPart.getEnvelope
     to.addAttribute(soapEnvelope.createName("mustUnderstand", "s", "http://www.w3.org/2003/05/soap-envelope"), "1")
     to.addAttribute(soapEnvelope.createName("Id", "u", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"), "_1")
-    to.addTextNode("https://testinfogateway.ofsted.gov.uk/OnlineOfsted/GatewayOOServices.svc")
+    to.addTextNode(appConfig.cygnumURL)
     to
   }
 
-  //TODO: wrap in Try
-  private def addUsernameToken(securityElement: SOAPElement, soapMessage: SOAPMessage) = {
+  private def addUsernameToken(securityElement: SOAPElement, soapMessage: SOAPMessage): SOAPElement = {
     val usernameToken = securityElement.addChildElement("UsernameToken", "o")
     val soapEnvelope = soapMessage.getSOAPPart.getEnvelope
     usernameToken.addAttribute(soapEnvelope.createName("Id", "u", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"), String.format("uuid-%s", ID1))
-    usernameToken.addChildElement("Username", "o").setValue("extranet\\hmrcgforms")
+    usernameToken.addChildElement("Username", "o").setValue(appConfig.cygnumUsername)
     val e = usernameToken.addChildElement("Password", "o")
     e.addAttribute(soapEnvelope.createName("Type", "o", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"), "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText")
-    e.addTextNode("MX(6ZvLS7wmt~2\\")
+    e.addTextNode(appConfig.cygnumPassword)
     usernameToken
   }
 
-  //TODO: wrap in Try
-  private def addSecurity(soapHeader: SOAPElement, soapMessage: SOAPMessage) = {
+  private def addSecurity(soapHeader: SOAPElement, soapMessage: SOAPMessage): SOAPElement = {
     val security = soapHeader.addChildElement("Security", "o", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd")
     val soapEnvelope = soapMessage.getSOAPPart.getEnvelope
     security.addAttribute(soapEnvelope.createName("mustUnderstand", "s", "http://www.w3.org/2003/05/soap-envelope"), "1")
     security
   }
 
-  //TODO: wrap in Try
-  //TODO: this must reference the JKS that's in the CustomWSConfigParser
-  private def getCertificate = {
-    val password = "tdLK!PEV8}Gb5CM"
-    // (i) Get byte array of password
-    val passwordByte = password.getBytes
-    // (ii) Get MD5 Hash of byte array
-    val digest = java.security.MessageDigest.getInstance("MD5")
-    val passwordHashed = digest.digest(passwordByte)
-    // (iii) Base64 encode hashed byte array
-    val passwordHashedbase64 = Base64.getEncoder.encodeToString(passwordHashed)
-    // (iv) Open the Seat using KeyStore
-    val keystore = KeyStore.getInstance("JKS")
-    keystore.load(new FileInputStream(new File("/home/mikail/Tmp/Ofsted/ofsted.jks")), password.toCharArray)
-    // (v) Extract the certificate.
-    val cert = keystore.getCertificate("le-externalextranetuser!00282yearsha22003template!0029-7c3ba8e1-ea15-421f-bd7a-a3cfea301c83")
-    cert
+  private def getCertificate: Certificate = {
+    val password = appConfig.cygnumClientPassword.toCharArray
+    val keystore = KeyStore.getInstance("jks")
+    val (file, _) = createTempFileForData(appConfig.cygnumKeyStore)
+    keystore.load(new FileInputStream(file), password)
+    keystore.getCertificate(appConfig.cygnumKeyStorePrivateKey) //TODO: rename to alias??
   }
 
 }

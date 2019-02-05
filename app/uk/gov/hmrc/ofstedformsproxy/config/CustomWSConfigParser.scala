@@ -48,7 +48,7 @@ class CustomWSConfigParser @Inject()(configuration: Configuration, env: Environm
     val internalParser = new WSConfigParser(configuration, env)
     val config = internalParser.parse()
 
-    val keyStores = config.ssl.keyManagerConfig.keyStoreConfigs.filter(_.data.forall(_.nonEmpty)).map { ks ⇒
+    val keyStores: Seq[KeyStoreConfig] = config.ssl.keyManagerConfig.keyStoreConfigs.filter(_.data.forall(_.nonEmpty)).map { ks ⇒
       (ks.storeType.toUpperCase, ks.filePath, ks.data) match {
         case (_, None, Some(data)) ⇒
           createKeyStoreConfig(ks, data)
