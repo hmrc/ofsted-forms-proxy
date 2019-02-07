@@ -138,7 +138,8 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
         recovery(outboundCallRequest, logMsg, s"http status ${upstream4xx.upstreamResponseCode.toString}", upstream4xx)
       case upstream5xx: Upstream5xxResponse =>
         logCallDuration(startTime)
-        val logMsg = s"Outbound call failed with Upstream5xxResponse status=${upstream5xx.upstreamResponseCode}"
+        val logMsg = s"Outbound call failed with Upstream5xxRespons" +
+          s"e status=${upstream5xx.upstreamResponseCode}"
         recovery(outboundCallRequest, logMsg, s"http status ${upstream5xx.upstreamResponseCode.toString}", upstream5xx)
       case httpException: HttpException =>
         logCallDuration(startTime)
