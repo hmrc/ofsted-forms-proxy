@@ -25,7 +25,7 @@ import play.api.test.Helpers._
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.ofstedformsproxy.config.AppConfig
 
-
+/*
 class HelloWorldControllerSpec extends WordSpec with Matchers with GuiceOneAppPerSuite {
   val fakeRequest = FakeRequest("POST", "/send")
 
@@ -46,3 +46,4 @@ class HelloWorldControllerSpec extends WordSpec with Matchers with GuiceOneAppPe
 
   }
 }
+ */
