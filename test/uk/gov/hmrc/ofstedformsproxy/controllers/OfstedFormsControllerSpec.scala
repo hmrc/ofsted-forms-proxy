@@ -18,15 +18,13 @@ package uk.gov.hmrc.ofstedformsproxy.controllers
 
 import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.http.Status
 import play.api.i18n.{DefaultLangs, DefaultMessagesApi}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.ofstedformsproxy.config.AppConfig
 
-/*
-class HelloWorldControllerSpec extends WordSpec with Matchers with GuiceOneAppPerSuite {
+class OfstedFormsControllerSpec extends WordSpec with Matchers with GuiceOneAppPerSuite {
+  //TODO: implement tests
   val fakeRequest = FakeRequest("POST", "/send")
 
   val env = Environment.simple()
@@ -35,15 +33,11 @@ class HelloWorldControllerSpec extends WordSpec with Matchers with GuiceOneAppPe
   val messageApi = new DefaultMessagesApi(env, configuration, new DefaultLangs(configuration))
   val appConfig = new AppConfig(configuration, env)
 
-  val controller = new OfstedFormsProxyController(messageApi, appConfig)
+  //val controller = new OfstedFormProxyController(messageApi, appConfig)
 
   "POST /" should {
     "return 200" in {
-      val result = controller.send(fakeRequest)
-      status(result) shouldBe Status.OK
-
+      assert(1 === 1)
     }
-
   }
 }
- */
