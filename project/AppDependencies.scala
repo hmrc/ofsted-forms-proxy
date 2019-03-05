@@ -1,6 +1,4 @@
 import play.core.PlayVersion.current
-import play.sbt.PlayImport._
-import sbt.Keys.libraryDependencies
 import sbt._
 
 object AppDependencies {
@@ -8,8 +6,10 @@ object AppDependencies {
   val compile = Seq(
 
     "uk.gov.hmrc"             %% "govuk-template"           % "5.26.0-play-25",
-    "uk.gov.hmrc"             %% "play-ui"                  % "7.27.0-play-25",
-    "uk.gov.hmrc"             %% "bootstrap-play-25"        % "4.1.0"
+    "uk.gov.hmrc"             %% "play-ui"                  % "7.32.0-play-25",
+    "uk.gov.hmrc"             %% "bootstrap-play-25"        % "4.9.0",
+    "org.scalaz"              %% "scalaz-core"              % "7.2.27",
+    "uk.gov.hmrc"             %% "customs-api-common"       % "1.36.0"
   )
 
   val test = Seq(
