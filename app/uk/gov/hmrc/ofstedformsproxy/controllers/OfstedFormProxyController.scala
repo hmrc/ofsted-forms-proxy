@@ -38,7 +38,7 @@ import scala.concurrent.Future
 import scala.util.control.NonFatal
 import scala.xml.Elem
 
-//  //TODO: Add the AuthModule ???
+//  //TODO: Add the Auth action filter
 //  //TODO: Play Crypto Secret
 //  //TODO: Add Prod Router
 //  //TODO: set up kibana metrics
