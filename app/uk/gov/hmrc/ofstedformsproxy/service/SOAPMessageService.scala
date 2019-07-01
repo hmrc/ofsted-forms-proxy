@@ -63,7 +63,13 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
 
   override def buildFormSubmissionPayload(node: NodeSeq): String \/ String = {
     val result: String \/ String = for {
-      xmlDocument <- readInXMLPayload(node)
+      xmlDocument <- readInXMLPayload(
+        <SendData xmlns="http://tempuri.org/">
+          <Service>SendApplicationForms</Service>
+          <InputParameters>&lt;?xml version="1.0" encoding="utf-8"?&gt;&lt;Parameters&gt;&lt;DateRange&gt;&lt;StartDateTime&gt;2019-06-11T08:32:50&lt;/StartDateTime&gt;&lt;EndDateTime&gt;2019-06-11T17:32:50&lt;/EndDateTime&gt;&lt;/DateRange&gt;&lt;/Parameters&gt;</InputParameters>
+        <Data>{escapePayload(node)}</Data>
+        </SendData>
+      )
       soapMessage <- createSOAPEnvelope(xmlDocument)
       signedSoapMessage <- signSOAPMessage(soapMessage, SendData)
     } yield stringifySoapMessage(signedSoapMessage)
@@ -73,6 +79,11 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
       case -\/(error) => -\/(error)
     }
   }
+
+  private def escapePayload(node: NodeSeq): String =
+    node.toString
+      .replaceAll("\n", "")
+      .replaceAll("\r", "")
 
   override def buildGetURNPayload(): String \/ String = {
     val result: String \/ String = for {
@@ -107,9 +118,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     }
     match {
       case Success(document) => \/-(document)
-      case Failure(e: ParserConfigurationException) => -\/(e.getMessage)
-      case Failure(e: SAXException) => -\/(e.getMessage)
-      case Failure(e: IOException) => -\/(e.getMessage)
+      case Failure(e) => throw e
     }
   }
 
@@ -186,13 +195,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
       soapMessage
     } match {
       case Success(signedSoapMessage) => \/-(signedSoapMessage)
-      case Failure(e: SOAPException) => -\/(e.getMessage)
-      case Failure(e: DOMException) => -\/(e.getMessage)
-      case Failure(e: NoSuchAlgorithmException) => -\/(e.getMessage)
-      case Failure(e: KeyStoreException) => -\/(e.getMessage)
-      case Failure(e: CertificateEncodingException) => -\/(e.getMessage)
-      case Failure(e: InvalidAlgorithmParameterException) => -\/(e.getMessage)
-      case Failure(e: XMLSignatureException) => -\/(e.getMessage)
+      case Failure(e: Exception) => throw e
     }
 
   }
