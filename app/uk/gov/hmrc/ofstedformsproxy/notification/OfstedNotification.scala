@@ -18,6 +18,9 @@ package uk.gov.hmrc.ofstedformsproxy.notification
 
 import java.time.LocalDateTime
 
+import play.api.libs.json._
+import uk.gov.hmrc.ofstedformsproxy.json.ValueClassFormat
+
 case class OfstedNotification(
                                formId: FormId,
                                formLink: FormLink,
@@ -25,8 +28,22 @@ case class OfstedNotification(
                                emailAddress: EmailAddress = EmailAddress(""),
                                kind: String = "")
 
-case class EmailAddress(email: String)
+case class EmailAddress(value: String)
 
-case class PhoneNumber(number: String)
+object EmailAddress {
+  implicit val format: OFormat[EmailAddress] = ValueClassFormat.oformat("email", EmailAddress.apply, _.value)
+
+  val vformat: Format[EmailAddress] = ValueClassFormat.vformat("email", EmailAddress.apply, x => JsString(x.value))
+}
+
+
+case class TemplateId(value: String)
+
+object TemplateId {
+  implicit val format: OFormat[TemplateId] = ValueClassFormat.oformat("templateId", TemplateId.apply, _.value)
+
+  val vformat: Format[TemplateId] = ValueClassFormat.vformat("templateId", TemplateId.apply, x => JsString(x.value))
+}
+
 
 case class FormLink(link: String)

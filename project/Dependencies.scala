@@ -8,6 +8,7 @@ object Dependencies {
 
   val compile = Seq(
     "com.github.pureconfig" %% "pureconfig" % "0.10.2",
+    "org.julienrf" %% "play-json-derived-codecs" % "3.3",
     "uk.gov.service.notify" % "notifications-java-client" % "3.14.2-RELEASE"
   )
 

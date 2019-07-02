@@ -19,15 +19,19 @@ package uk.gov.hmrc.ofstedformsproxy.controllers
 import javax.inject.Inject
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.ofstedformsproxy.config.AppConfig
+import uk.gov.hmrc.ofstedformsproxy.handlers.{NotifierRequestHandler, NotifyRequest}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 //TODO remove Guice!
 class NotifierController @Inject()(config: AppConfig)(implicit ex: ExecutionContext) extends BaseController {
 
-  def sendNotification(): Action[AnyContent] = Action.async {
+  def sendNotification(): Action[NotifyRequest] = Action.async(parse.json[NotifyRequest]) {
     implicit request =>
+//      new NotifierRequestHandler[Try].handleRequest()
+      println(s"===> ${request.body}")
     Future.successful(Ok("all good here"))
   }
 }

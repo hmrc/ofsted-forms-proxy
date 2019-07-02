@@ -19,31 +19,31 @@ package uk.gov.hmrc.ofstedformsproxy.notification
 import cats.MonadError
 import cats.syntax.applicative._
 
-trait OfstedReviewNotificationAlgebra[F[_]] {
-  def requestReview(requestReviewFormId: FormId): F[Unit]
-  def reject(reviewedFormId: FormId, rejectionComment: String): F[Unit]
-  def approve(reviewedFormId: FormId): F[Unit]
-}
+//trait OfstedReviewNotificationAlgebra[F[_]] {
+//  def requestReview(requestReviewFormId: FormId): F[Unit]
+//  def reject(reviewedFormId: FormId, rejectionComment: String): F[Unit]
+//  def approve(reviewedFormId: FormId): F[Unit]
+//}
+//
+//class OfstedEmailReviewNotifier[F[_]](notificationClient: OfstedNotificationClient[F])(
+//  implicit monadError: MonadError[F, String])
+//  extends OfstedReviewNotificationAlgebra[F] {
+//
+//  override def requestReview(requestReviewFormId: FormId): F[Unit] = {
+//    notificationClient.send(NotifyRequest(requestReviewFormId, Submitted))
+//    println(s"Review form: $requestReviewFormId")
+//  }.pure
+//
+//  override def reject(reviewedFormId: FormId, rejectionComment: String): F[Unit] = {
+//    notificationClient.send(NotifyRequest(reviewedFormId, InProgress))
+//    println(s"Rejected: ${reviewedFormId.value} with comment: $rejectionComment")
+//  }.pure
+//
+//  override def approve(reviewedFormId: FormId): F[Unit] = {
+//    notificationClient.send(NotifyRequest(reviewedFormId, Approved))
+//    println(s"Approved: ${reviewedFormId.value}")
+//  }.pure
+//}
 
-class OfstedEmailReviewNotifier[F[_]](notificationClient: OfstedNotificationClient[F])(
-  implicit monadError: MonadError[F, String])
-  extends OfstedReviewNotificationAlgebra[F] {
-
-  override def requestReview(requestReviewFormId: FormId): F[Unit] = {
-    notificationClient.send(NotifyRequest(requestReviewFormId, Submitted))
-    println(s"Review form: $requestReviewFormId")
-  }.pure
-
-  override def reject(reviewedFormId: FormId, rejectionComment: String): F[Unit] = {
-    notificationClient.send(NotifyRequest(reviewedFormId, InProgress))
-    println(s"Rejected: ${reviewedFormId.value} with comment: $rejectionComment")
-  }.pure
-
-  override def approve(reviewedFormId: FormId): F[Unit] = {
-    notificationClient.send(NotifyRequest(reviewedFormId, Approved))
-    println(s"Approved: ${reviewedFormId.value}")
-  }.pure
-}
-
-case class NotifyRequest(formId: FormId, formStatus: FormStatus)
+//case class NotifyRequest(formId: FormId, formStatus: FormStatus)
 

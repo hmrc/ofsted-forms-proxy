@@ -24,12 +24,13 @@ import uk.gov.service.notify.SendEmailResponse
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 import cats.implicits._
+import uk.gov.hmrc.ofstedformsproxy.handlers.NotifyRequest
 
 trait Notifier[F[_]] extends OfstedNotificationConf {
 
   def notifyByEmail(templateId: String, emailAddress: EmailAddress, personalisation: Map[String, String])(
     implicit me: MonadError[F, String]): F[SendEmailResponse] =
-    runNotification(Try(notificationClient.sendEmail(templateId, emailAddress.email, personalisation.asJava, "")))
+    runNotification(Try(notificationClient.sendEmail(templateId, emailAddress.value, personalisation.asJava, "")))
 
   private def runNotification[T](fn: Try[T])(implicit me: MonadError[F, String]): F[T] = fn match {
     case Success(response) => me.pure(response)
@@ -37,25 +38,19 @@ trait Notifier[F[_]] extends OfstedNotificationConf {
   }
 }
 
+//TODO replace hard coded with personilised data Map
 class OfstedNotificationClient[F[_]: Monad](notifier: Notifier[F]) extends FormLinkBuilder {
 
   def send(notifyRequest: NotifyRequest)(implicit me: MonadError[F, String]): F[OfstedNotificationClientResponse] =
     notifier
       .notifyByEmail(
-        "666",
-        EmailAddress("from_destination@someone.com"),
-        personalise(notifyRequest.formId, notifyRequest.formStatus))
+        notifyRequest.templateId.value,
+        notifyRequest.email,
+        basicTemplate("to do", "to do", "to do"))
       .map(emailResponse => OfstedNotificationClientResponse(emailResponse))
 
-  private val basicTemplate: (FormId, String) => Map[String, String] =
-    (formId, key) => Map("form-id" -> formId.value, key -> LocalDateTime.now.toString)
-
-  private def personalise(formId: FormId, status: FormStatus): Map[String, String] = status match {
-    case Approved   => basicTemplate(formId, "acceptance-time")
-    case InProgress => basicTemplate(formId, "rejection-time") + ("url" -> buildLink(formId).link)
-    case Submitted  => basicTemplate(formId, "submission-time")
-    case _          => Map.empty
-  }
+  val basicTemplate: (String, String, String) => Map[String, String] =
+    (formId, firstName, lastName) => Map("formId" -> formId, "firstName" -> firstName, "lastName" -> lastName)
 }
 
 case class OfstedNotificationClientResponse(emailResponse: SendEmailResponse)
@@ -70,13 +65,3 @@ trait FormLinkBuilder extends OfstedNotificationConf {
 //TODO the following is very likely to be removed
 case class FormId(value: String)
 
-sealed trait FormStatus
-case object InProgress extends FormStatus
-case object Approved extends FormStatus
-case object Submitted extends FormStatus
-
-object FormStatus {
-  implicit val equal: Eq[FormStatus] = Eq.fromUniversalEquals
-
-  val all: Set[FormStatus] = Set(InProgress, Approved, Submitted)
-}

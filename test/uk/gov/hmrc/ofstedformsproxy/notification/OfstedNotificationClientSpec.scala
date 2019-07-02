@@ -16,12 +16,11 @@
 
 package uk.gov.hmrc.ofstedformsproxy.notification
 
-import java.time.LocalDateTime
-
 import cats.{Id, MonadError}
-import org.scalatest.{MustMatchers, WordSpec}
-import uk.gov.service.notify.SendEmailResponse
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.{MustMatchers, WordSpec}
+import uk.gov.hmrc.ofstedformsproxy.handlers.NotifyRequest
+import uk.gov.service.notify.SendEmailResponse
 
 class OfstedNotificationClientSpec extends WordSpec with MustMatchers with MockFactory {
 
@@ -38,18 +37,19 @@ class OfstedNotificationClientSpec extends WordSpec with MustMatchers with MockF
     val client = new OfstedNotificationClient[Id](notifier)
     val builder = new FormLinkBuilder {}
     val formId = FormId("123")
+    val notifyRequest = NotifyRequest(TemplateId("xxx"), EmailAddress("xx@yy"))
 
     (notifier
       .notifyByEmail(_: String, _: EmailAddress, _: Map[String, String])(_: MonadError[Id, String]))
       .expects(where {
-        (_: String, _: EmailAddress, personalisation: Map[String, String], _: MonadError[Id, String]) =>
-          val acceptanceTime = personalisation("acceptance-time")
-            personalisation("form-id") == formId.value &&
-            LocalDateTime.parse(acceptanceTime).withSecond(0).withNano(0) == LocalDateTime.now.withSecond(0).withNano(0)
+        (_: String, emailAddress: EmailAddress, personalisation: Map[String, String], _: MonadError[Id, String]) =>
+          emailAddress === notifyRequest.email
       })
       .returns(emailResponse)
 
-    client.send(NotifyRequest(formId, Approved)) mustBe OfstedNotificationClientResponse(emailResponse)
+    client.send(notifyRequest) must matchPattern {
+      case OfstedNotificationClientResponse(_) =>
+    }
   }
 
   private val emailResponse = new SendEmailResponse(
