@@ -2,3 +2,5 @@
 
 GET     /geturn             uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.getUrn()
 POST    /form               uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.submitForm()
+
+POST    /notifier           uk.gov.hmrc.ofstedformsproxy.controllers.NotifierController.sendNotification()

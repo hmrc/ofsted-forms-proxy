@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.ofstedformsproxy.notification
+package uk.gov.hmrc.ofstedformsproxy.controllers
 
-import uk.gov.service.notify.NotificationClient
-import pureconfig.generic.auto._
+import javax.inject.Inject
+import play.api.mvc.{Action, AnyContent}
+import uk.gov.hmrc.ofstedformsproxy.config.AppConfig
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
+import scala.concurrent.{ExecutionContext, Future}
 
-trait OfstedNotificationConf {
-  val ofstedNotification: OfstedNotificationConfig =
-    pureconfig.loadConfigOrThrow[OfstedNotificationConfig]("ofsted.notifications")
-  val notificationClient: NotificationClient = new NotificationClient(ofstedNotification.apiKey)
+//TODO remove Guice!
+class NotifierController @Inject()(config: AppConfig)(implicit ex: ExecutionContext) extends BaseController {
+
+  def sendNotification(): Action[AnyContent] = Action.async {
+    implicit request =>
+    Future.successful(Ok("all good here"))
+  }
 }
 
-
-case class OfstedNotificationConfig(apiKey: String, formLinkPrefix: String)

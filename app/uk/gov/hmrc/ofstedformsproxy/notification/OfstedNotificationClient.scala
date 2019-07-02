@@ -42,8 +42,8 @@ class OfstedNotificationClient[F[_]: Monad](notifier: Notifier[F]) extends FormL
   def send(notifyRequest: NotifyRequest)(implicit me: MonadError[F, String]): F[OfstedNotificationClientResponse] =
     notifier
       .notifyByEmail(
-        formTemplates(notifyRequest.formStatus),
-        EmailAddress(notifier.ofstedNotification.email),
+        "666",
+        EmailAddress("from_destination@someone.com"),
         personalise(notifyRequest.formId, notifyRequest.formStatus))
       .map(emailResponse => OfstedNotificationClientResponse(emailResponse))
 
@@ -63,7 +63,6 @@ case class OfstedNotificationClientResponse(emailResponse: SendEmailResponse)
 trait FormLinkBuilder extends OfstedNotificationConf {
   def buildLink(formId: FormId): FormLink = {
     val link = s"${ofstedNotification.formLinkPrefix}${formId.value}"
-    println(link)
     FormLink(link)
   }
 }
@@ -73,15 +72,11 @@ case class FormId(value: String)
 
 sealed trait FormStatus
 case object InProgress extends FormStatus
-case object Summary extends FormStatus
-case object Validated extends FormStatus
-case object Signed extends FormStatus
-case object NeedsReview extends FormStatus
 case object Approved extends FormStatus
 case object Submitted extends FormStatus
 
 object FormStatus {
   implicit val equal: Eq[FormStatus] = Eq.fromUniversalEquals
 
-  val all: Set[FormStatus] = Set(InProgress, Summary, Validated, Signed, NeedsReview, Approved, Submitted)
+  val all: Set[FormStatus] = Set(InProgress, Approved, Submitted)
 }
