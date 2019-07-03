@@ -37,7 +37,7 @@ class OfstedNotificationClientSpec extends WordSpec with MustMatchers with MockF
     val client = new OfstedNotificationClient[Id](notifier)
     val builder = new FormLinkBuilder {}
     val formId = FormId("123")
-    val notifyRequest = NotifyRequest(TemplateId("xxx"), EmailAddress("xx@yy"))
+    val notifyRequest = NotifyRequest(TemplateId("xxx"), EmailAddress("xx@yy"), Map("firstName" -> "Tom", "lastName" -> "Cruise"))
 
     (notifier
       .notifyByEmail(_: String, _: EmailAddress, _: Map[String, String])(_: MonadError[Id, String]))

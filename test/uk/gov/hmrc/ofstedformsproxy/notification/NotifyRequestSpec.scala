@@ -24,9 +24,9 @@ class NotifyRequestSpec extends WordSpec with MustMatchers {
 
   "can be parsed from/to json" in {
     val email = EmailAddress("mikey@mouse")
-    val request = NotifyRequest(TemplateId("333"), email)
+    val request = NotifyRequest(TemplateId("333"), email, Map("firstName" -> "Tom", "lastName" -> "Cruise"))
 
-    Json.parse("""{"templateId":"333","email":"mikey@mouse"}""").as[NotifyRequest] mustBe request
+    Json.parse("""{"templateId":"333","email":"mikey@mouse", "properties": {"firstName": "Tom","lastName": "Cruise"}}""")
+      .as[NotifyRequest] mustBe request
   }
-
 }

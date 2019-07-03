@@ -16,15 +16,13 @@
 
 package uk.gov.hmrc.ofstedformsproxy.notification
 
-import java.time.LocalDateTime
-
-import cats.{Eq, Monad, MonadError}
+import cats.implicits._
+import cats.{Monad, MonadError}
+import uk.gov.hmrc.ofstedformsproxy.handlers.NotifyRequest
 import uk.gov.service.notify.SendEmailResponse
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
-import cats.implicits._
-import uk.gov.hmrc.ofstedformsproxy.handlers.NotifyRequest
 
 trait Notifier[F[_]] extends OfstedNotificationConf {
 

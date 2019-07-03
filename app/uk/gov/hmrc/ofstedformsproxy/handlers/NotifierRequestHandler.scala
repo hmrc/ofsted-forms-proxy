@@ -33,20 +33,9 @@ class NotifierRequestHandler[F[_]: Monad](notificationClient: OfstedNotification
 
 case class Response(status: Int, msg: String)
 
-case class NotifyRequest(templateId: TemplateId, email: EmailAddress)
+case class NotifyRequest(templateId: TemplateId, email: EmailAddress, properties: Map[String, String])
 
 object NotifyRequest {
 
-  val reads: Reads[NotifyRequest] = Json.format[NotifyRequest]
-
-  val write: OWrites[NotifyRequest] = OWrites[NotifyRequest] { notify =>
-    Json.obj(
-"templateId" -> JsString(notify.templateId.value),
-      "email" -> JsString(notify.email.value)
-    )
-  }
-
-  implicit val format = OFormat[NotifyRequest](reads, write)
-
-  OFormat(reads, write)
+  implicit val format: OFormat[NotifyRequest] = Json.format[NotifyRequest]
 }

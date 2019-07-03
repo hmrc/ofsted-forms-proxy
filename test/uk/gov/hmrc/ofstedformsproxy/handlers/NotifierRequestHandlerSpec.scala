@@ -36,7 +36,7 @@ class NotifierRequestHandlerSpec extends WordSpec with MustMatchers with MockFac
     val notifier = mock[Notifier[Id]]
     val client = new OfstedNotificationClient[Id](notifier)
     val handler = new NotifierRequestHandler[Id](client)
-    val notifyRequest = NotifyRequest(TemplateId("123"), EmailAddress("some@else"))
+    val notifyRequest = NotifyRequest(TemplateId("123"), EmailAddress("some@else"), Map("firstName" -> "Tom", "lastName" -> "Cruise"))
 
     (notifier.notifyByEmail(_: String, _: EmailAddress, _: Map[String, String])(_: MonadError[Id, String]))
       .expects(where {
