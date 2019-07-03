@@ -19,13 +19,14 @@ package uk.gov.hmrc.ofstedformsproxy.handlers
 import cats.{Applicative, MonadError}
 import play.api.libs.json._
 import uk.gov.hmrc.ofstedformsproxy.notification.{EmailAddress, OfstedNotificationClient, OfstedNotificationClientResponse, TemplateId}
+import cats.implicits._
 
 class NotifierRequestHandler[F[_]](notificationClient: OfstedNotificationClient[F]) {
 
-  def handleRequest(notifyRequest: NotifyRequest)(implicit M: Applicative[F], me: MonadError[F, String]): F[Response] = {
-    notificationClient.send(notifyRequest) match {
-      case OfstedNotificationClientResponse(_) => me.pure(Response(200, ""))
-      case _ => me.pure(Response(500, "unable to send email"))
+  def handleRequest(notifyRequest: NotifyRequest)(implicit me: MonadError[F, String]): F[Response] = {
+    notificationClient.send(notifyRequest) map {
+      case OfstedNotificationClientResponse(_) => Response(200, "")
+      case _ => Response(500, "unable to send email")
     }
   }
 }

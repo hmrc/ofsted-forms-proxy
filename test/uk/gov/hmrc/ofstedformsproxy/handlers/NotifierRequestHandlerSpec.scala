@@ -47,16 +47,6 @@ class NotifierRequestHandlerSpec extends WordSpec with MustMatchers {
   }
 
   "return 500 with error msg if email sent fail" in {
-    implicit val me2 = new MonadError[Try, String] {
-      override def flatMap[A, B](fa: Try[A])(f: A => Try[B]): Try[B] = fa.flatMap(f)
-      override def tailRecM[A, B](a: A)(f: A => Try[Either[A, B]]): Try[B] = ???
-      override def raiseError[A](e: String): Try[A] = Failure(new Exception(e))
-      override def handleErrorWith[A](fa: Try[A])(f: String => Try[A]): Try[A] = fa.recoverWith {
-        case e: Throwable => Failure(e)
-      }
-      override def pure[A](x: A): Try[A] = Try(x)
-    }
-
     val errorMsg = "unable to send email"
     val notifyRequest = NotifyRequest(TemplateId("123"), EmailAddress("some@else"), Map("firstName" -> "Tom", "lastName" -> "Cruise"))
     val notifier = new Notifier[Try] {
@@ -67,7 +57,10 @@ class NotifierRequestHandlerSpec extends WordSpec with MustMatchers {
     val client = new OfstedNotificationClient[Try](notifier)
     val handler = new NotifierRequestHandler[Try](client)
 
-    handler.handleRequest(notifyRequest) mustBe Success(Response(500, errorMsg))
+    val actualResponse = handler.handleRequest(notifyRequest)(uk.gov.hmrc.ofstedformsproxy.handlers.me)
+
+    actualResponse.isFailure mustBe true
+    actualResponse.failed.get.getMessage mustBe errorMsg
   }
 
 
@@ -75,7 +68,7 @@ class NotifierRequestHandlerSpec extends WordSpec with MustMatchers {
     val client = new OfstedNotificationClient[Id](new Notifier[Id] {})
     val handler = new NotifierRequestHandler[Id](client)
     val notifyRequest = NotifyRequest(TemplateId("339fc6bd-8369-4a33-9d1a-e0607c63a1e2"), EmailAddress("pasquale.gatto@digital.hmrc.gov.uk"),
-      Map("formId" -> "222", "firstName" -> "Tom", "lastName" -> "Cruise"))
+      Map("formId" -> "222", "firstName" -> "Tommy", "lastName" -> "Cruise"))
 
     handler.handleRequest(notifyRequest) mustBe Response(200, "")
   }
