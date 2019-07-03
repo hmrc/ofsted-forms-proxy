@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.ofstedformsproxy.notification
 
-import cats.{Id, MonadError}
+import cats.{Applicative, Id, MonadError}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{MustMatchers, WordSpec}
 import uk.gov.hmrc.ofstedformsproxy.handlers.NotifyRequest
@@ -40,11 +40,8 @@ class OfstedNotificationClientSpec extends WordSpec with MustMatchers with MockF
     val notifyRequest = NotifyRequest(TemplateId("xxx"), EmailAddress("xx@yy"), Map("firstName" -> "Tom", "lastName" -> "Cruise"))
 
     (notifier
-      .notifyByEmail(_: String, _: EmailAddress, _: Map[String, String])(_: MonadError[Id, String]))
-      .expects(where {
-        (_: String, emailAddress: EmailAddress, personalisation: Map[String, String], _: MonadError[Id, String]) =>
-          emailAddress === notifyRequest.email
-      })
+      .notifyByEmail(_: NotifyRequest)(_: MonadError[Id, String], _: Applicative[Id]))
+      .expects(notifyRequest, me, Applicative[Id])
       .returns(emailResponse)
 
     client.send(notifyRequest) must matchPattern {

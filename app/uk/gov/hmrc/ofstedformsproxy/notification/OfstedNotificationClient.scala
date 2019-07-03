@@ -17,38 +17,28 @@
 package uk.gov.hmrc.ofstedformsproxy.notification
 
 import cats.implicits._
-import cats.{Monad, MonadError}
+import cats.{Applicative, MonadError}
 import uk.gov.hmrc.ofstedformsproxy.handlers.NotifyRequest
 import uk.gov.service.notify.SendEmailResponse
 
 import scala.collection.JavaConverters._
-import scala.util.{Failure, Success, Try}
 
 trait Notifier[F[_]] extends OfstedNotificationConf {
 
-  def notifyByEmail(templateId: String, emailAddress: EmailAddress, personalisation: Map[String, String])(
-    implicit me: MonadError[F, String]): F[SendEmailResponse] =
-    runNotification(Try(notificationClient.sendEmail(templateId, emailAddress.value, personalisation.asJava, "")))
-
-  private def runNotification[T](fn: Try[T])(implicit me: MonadError[F, String]): F[T] = fn match {
-    case Success(response) => me.pure(response)
-    case Failure(ex)       => me.raiseError(s"Unable to notify reviewer ${ex.getMessage}")
+  def notifyByEmail(notifyRequest: NotifyRequest)(
+    implicit me: MonadError[F, String], M: Applicative[F]): F[SendEmailResponse] = {
+    import notifyRequest._
+    val sendEmailResponse = notificationClient.sendEmail(templateId.value, email.value, properties.asJava, "")
+    M.pure(sendEmailResponse)
   }
+
 }
 
-//TODO replace hard coded with personilised data Map
-class OfstedNotificationClient[F[_]: Monad](notifier: Notifier[F]) extends FormLinkBuilder {
+class OfstedNotificationClient[F[_]](notifier: Notifier[F]) extends FormLinkBuilder {
 
   def send(notifyRequest: NotifyRequest)(implicit me: MonadError[F, String]): F[OfstedNotificationClientResponse] =
-    notifier
-      .notifyByEmail(
-        notifyRequest.templateId.value,
-        notifyRequest.email,
-        basicTemplate("to do", "to do", "to do"))
+      notifier.notifyByEmail(notifyRequest)
       .map(emailResponse => OfstedNotificationClientResponse(emailResponse))
-
-  val basicTemplate: (String, String, String) => Map[String, String] =
-    (formId, firstName, lastName) => Map("formId" -> formId, "firstName" -> firstName, "lastName" -> lastName)
 }
 
 case class OfstedNotificationClientResponse(emailResponse: SendEmailResponse)

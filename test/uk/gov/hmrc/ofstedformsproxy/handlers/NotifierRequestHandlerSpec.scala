@@ -16,12 +16,14 @@
 
 package uk.gov.hmrc.ofstedformsproxy.handlers
 
-import cats.{Id, MonadError}
-import org.scalamock.scalatest.MockFactory
+import cats.{Applicative, Id, MonadError}
 import org.scalatest.{MustMatchers, WordSpec}
 import uk.gov.hmrc.ofstedformsproxy.notification.{EmailAddress, Notifier, OfstedNotificationClient, TemplateId}
+import uk.gov.service.notify.SendEmailResponse
 
-class NotifierRequestHandlerSpec extends WordSpec with MustMatchers with MockFactory {
+import scala.util.{Failure, Success, Try}
+
+class NotifierRequestHandlerSpec extends WordSpec with MustMatchers {
 
   implicit val me = new MonadError[Id, String] {
     override def flatMap[A, B](fa: Id[A])(f: A => Id[B]): Id[B] = f(fa)
@@ -31,19 +33,67 @@ class NotifierRequestHandlerSpec extends WordSpec with MustMatchers with MockFac
     override def pure[A](x: A): Id[A] = x
   }
 
-
   "return 200 if email is sent" in {
-    val notifier = mock[Notifier[Id]]
+    val notifier = new Notifier[Id] {
+      override def notifyByEmail(notifyRequest: NotifyRequest)(
+        implicit me: MonadError[Id, String], M: Applicative[Id]): Id[SendEmailResponse] = emailResponse
+    }
+
     val client = new OfstedNotificationClient[Id](notifier)
     val handler = new NotifierRequestHandler[Id](client)
     val notifyRequest = NotifyRequest(TemplateId("123"), EmailAddress("some@else"), Map("firstName" -> "Tom", "lastName" -> "Cruise"))
 
-    (notifier.notifyByEmail(_: String, _: EmailAddress, _: Map[String, String])(_: MonadError[Id, String]))
-      .expects(where {
-        (id: String, email: EmailAddress, _: Map[String, String], _: MonadError[Id, String]) =>
-          id == "123" && email === EmailAddress("some@else")
-      })
+    handler.handleRequest(notifyRequest) mustBe Response(200, "")
+  }
+
+  "return 500 with error msg if email sent fail" in {
+    implicit val me2 = new MonadError[Try, String] {
+      override def flatMap[A, B](fa: Try[A])(f: A => Try[B]): Try[B] = fa.flatMap(f)
+      override def tailRecM[A, B](a: A)(f: A => Try[Either[A, B]]): Try[B] = ???
+      override def raiseError[A](e: String): Try[A] = Failure(new Exception(e))
+      override def handleErrorWith[A](fa: Try[A])(f: String => Try[A]): Try[A] = fa.recoverWith {
+        case e: Throwable => Failure(e)
+      }
+      override def pure[A](x: A): Try[A] = Try(x)
+    }
+
+    val errorMsg = "unable to send email"
+    val notifyRequest = NotifyRequest(TemplateId("123"), EmailAddress("some@else"), Map("firstName" -> "Tom", "lastName" -> "Cruise"))
+    val notifier = new Notifier[Try] {
+        override def notifyByEmail(notifyRequest: NotifyRequest)(
+          implicit me: MonadError[Try, String], M: Applicative[Try]): Try[SendEmailResponse] = Try(throw new Exception(errorMsg))
+      }
+
+    val client = new OfstedNotificationClient[Try](notifier)
+    val handler = new NotifierRequestHandler[Try](client)
+
+    handler.handleRequest(notifyRequest) mustBe Success(Response(500, errorMsg))
+  }
+
+
+  "send email" ignore {
+    val client = new OfstedNotificationClient[Id](new Notifier[Id] {})
+    val handler = new NotifierRequestHandler[Id](client)
+    val notifyRequest = NotifyRequest(TemplateId("339fc6bd-8369-4a33-9d1a-e0607c63a1e2"), EmailAddress("pasquale.gatto@digital.hmrc.gov.uk"),
+      Map("formId" -> "222", "firstName" -> "Tom", "lastName" -> "Cruise"))
 
     handler.handleRequest(notifyRequest) mustBe Response(200, "")
   }
+
+
+  private val emailResponse = new SendEmailResponse(
+    """{
+      | "id": "0d809b90-2431-4605-adcc-d32e77397989",
+      | "content": {
+      |   "notificationId":"0d809b90-2431-4605-adcc-d32e77397989", "reference":"null",
+      |   "templateId":"99a38fa2-fe0b-4e14-b6-fd8d644f7a4d",
+      |   "body": "'Hey Pas, I'm trying out Notify. Today is Thursday and my favourite colour is black.'",
+      |   "subject": "some subject"
+      | },
+      | "template": {
+      |   "id":"99a38fa2-fe0b-4e14-b6-fd8d644f7a4d",
+      |   "version":"1",
+      |   "uri":"'https://api.notifications.service.gov.uk/services'"
+      | }
+      |}""".stripMargin)
 }
