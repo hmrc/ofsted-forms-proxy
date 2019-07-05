@@ -21,7 +21,7 @@ import org.scalatest.{MustMatchers, WordSpec}
 import uk.gov.hmrc.ofstedformsproxy.notification.{EmailAddress, Notifier, OfstedNotificationClient, TemplateId}
 import uk.gov.service.notify.SendEmailResponse
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 class NotifierRequestHandlerSpec extends WordSpec with MustMatchers {
 

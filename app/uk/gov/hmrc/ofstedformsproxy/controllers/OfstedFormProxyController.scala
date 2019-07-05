@@ -113,13 +113,13 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
     val tmp: String = (xmlResponse \\ "SendDataResult").text
     val status: String = (scala.xml.XML.loadString(tmp) \\ "Status").text
 
-    if (!status.isEmpty) {
+    if (!status.isEmpty && status == "0") {
       logger.debug(s"Send Data service full response: ${xmlResponse.toString}: ", Seq.empty)
       Ok(Json.obj("status" -> status))
     }
     else {
       logger.error(s"Send Data service response: ${xmlResponse.toString}")
-      BadRequest("Failed to submit form")
+      BadRequest("Failed to submit form or response with status == 1")
     }
   }
 

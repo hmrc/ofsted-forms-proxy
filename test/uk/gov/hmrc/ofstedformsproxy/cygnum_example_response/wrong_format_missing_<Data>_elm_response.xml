@@ -1,0 +1,24 @@
+<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing"
+            xmlns:u="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+    <s:Header>
+        <a:Action s:mustUnderstand="1">http://tempuri.org/IGatewayOOServices/SendDataResponse</a:Action>
+        <a:RelatesTo>urn:uuid:00b681a4-8db2-4379-a688-a53fbb19a07f</a:RelatesTo>
+        <o:Security s:mustUnderstand="1"
+                    xmlns:o="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+            <u:Timestamp u:Id="_0">
+                <u:Created>2019-07-04T11:12:42.334Z</u:Created>
+                <u:Expires>2019-07-04T11:17:42.334Z</u:Expires>
+            </u:Timestamp>
+        </o:Security>
+    </s:Header>
+    <s:Body>
+        <SendDataResponse xmlns="http://tempuri.org/">
+            <SendDataResult>&lt;?xml version="1.0" encoding="utf-8"?&gt;&lt;Reply
+                xmlns:xs="http://www.w3.org/2001/XMLSchema-instance"&gt;&lt;Status&gt;1&lt;/Status&gt;&lt;InvocationID /&gt;&lt;Errors&gt;&lt;Error&gt;&lt;Code&gt;5004&lt;/Code&gt;&lt;Description&gt;General
+                System Error&lt;/Description&gt;&lt;Record /&gt;&lt;Info&gt;String reference not set to an instance of a
+                String.
+                Parameter name: s&lt;/Info&gt;&lt;/Error&gt;&lt;/Errors&gt;&lt;/Reply&gt;
+            </SendDataResult>
+        </SendDataResponse>
+    </s:Body>
+</s:Envelope>
