@@ -25,7 +25,7 @@ import uk.gov.hmrc.ofstedformsproxy.notification.{Notifier, OfstedNotificationCl
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 //TODO remove Guice!
 class NotifierController @Inject()(config: AppConfig, logger: OfstedFormProxyLogger)(implicit ex: ExecutionContext) extends BaseController {
@@ -40,6 +40,9 @@ class NotifierController @Inject()(config: AppConfig, logger: OfstedFormProxyLog
         case Success(value) =>
           logger.info(s"Response with ${value.status}")
           Future.successful(BadRequest(value.msg))
+        case Failure(e) =>
+          logger.error(s"Response error with ${e.getMessage}")
+          Future.failed(e)
       }
 
   }
