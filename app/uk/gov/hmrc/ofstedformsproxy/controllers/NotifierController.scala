@@ -32,7 +32,7 @@ class NotifierController @Inject()(config: AppConfig, logger: OfstedFormProxyLog
 
   def sendNotification(): Action[NotifyRequest] = Action.async(parse.json[NotifyRequest]) {
     implicit request =>
-      logger.info(s"Notification request received $request")
+      logger.debug(s"Notification request received $request", config.cygnumURL, payload = request.body.toString)
       new NotifierRequestHandler[Try](new OfstedNotificationClient[Try](new Notifier[Try] {})).handleRequest(request.body) match {
         case Success(value) if value.status == 200 => Future.successful(Ok(""))
         case Success(value) => Future.successful(BadRequest(value.msg))
