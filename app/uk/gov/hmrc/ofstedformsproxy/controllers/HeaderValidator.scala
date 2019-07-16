@@ -27,12 +27,12 @@ trait HeaderValidator extends Results {
 
   private lazy val validContentTypes = Seq("application/xml")
 
-  val contentTypeValidation: (Option[String] => Boolean) = _ exists (validContentTypes.contains(_))
+  val contentTypeValidation: Option[String] => Boolean = _ exists (validContentTypes.contains(_))
 
   val notificationLogger: OfstedFormProxyLogger
 
   def validateAccept(rules: Option[String] => Boolean): ActionBuilder[Request] = new ActionBuilder[Request] {
-    def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]): Future[Result] = {
+    def invokeBlock[A](request: Request[A], block: Request[A] => Future[Result]): Future[Result] = {
       val logMessage = "Received payload"
       val headers = request.headers.headers
       notificationLogger.debug(logMessage, headers)

@@ -93,6 +93,20 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       }
   }
 
+  def getIndividualDetails(): Action[AnyContent] = Action.async {
+    implicit request =>
+      soapService.buildGetIndividualDetailsPayload() match {
+        case \/-(payload) => {
+          logger.debug(s"Constructed GetIndividualDetails payload: ", appConfig.cygnumURL, payload)
+          callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetIndividualDetailsResponse)
+        }
+        case -\/(error) => {
+          logger.error("Failed to build the GetIndividualDetails SOAP Payload")
+          Future.successful(BadRequest(error))
+        }
+      }
+  }
+
   private def processGetURNResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Result = {
     val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
     val tmp: String = (xmlResponse \\ "GetDataResult").text
@@ -106,6 +120,12 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       logger.error(s"Get Data service response: ${xmlResponse.toString}")
       BadRequest("Failed to get URN")
     }
+  }
+
+  private def processGetIndividualDetailsResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Result = {
+    val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
+    logger.debug(s"Get Data service full response: ${xmlResponse.toString}: ", Seq.empty)
+    Ok(xmlResponse)
   }
 
   private def processFormSubmissionResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Result = {

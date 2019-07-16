@@ -49,6 +49,8 @@ trait SOAPMessageService {
   def buildGetURNPayload(): String \/ String
 
   def buildFormSubmissionPayload(node: NodeSeq): String \/ String
+
+  def buildGetIndividualDetailsPayload(): String \/ String
 }
 
 @Singleton
@@ -78,6 +80,27 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
       case \/-(xmlPayload) => \/-(xmlPayload)
       case -\/(error) => -\/(error)
     }
+  }
+
+  override def buildGetIndividualDetailsPayload(): String \/ String = {
+    val result: String \/ String = for {
+      xmlDocument <- readInXMLPayload(
+        <GetData xmlns="http://tempuri.org/">
+          <Service>GetIndividualDetails</Service>
+          <InputParameters>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&lt;Parameters&gt;&lt;IDs&gt;&lt;ID&gt;1843835&lt;/ID&gt;&lt;/IDs&gt;&lt;/Parameters&gt;</InputParameters>
+          <Data>{escapePayload(XML.loadString(scala.io.Source.fromFile("/home/pasquale/hmrc/dev/ofsted-forms-proxy/test/uk/gov/hmrc/ofstedformsproxy/cygnum_example_requests/GetIndividualDetails.xml")
+            .getLines.mkString))}</Data>
+        </GetData>
+      )
+      soapMessage <- createSOAPEnvelope(xmlDocument)
+      signedSoapMessage <- signSOAPMessage(soapMessage, GetData)
+    } yield stringifySoapMessage(signedSoapMessage)
+
+    result match {
+      case \/-(xmlPayload) => \/-(xmlPayload)
+      case -\/(error) => -\/(error)
+    }
+
   }
 
   private def escapePayload(node: NodeSeq): String =
