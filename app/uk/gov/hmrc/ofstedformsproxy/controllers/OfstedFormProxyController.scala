@@ -93,9 +93,9 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       }
   }
 
-  def getIndividualDetails(): Action[AnyContent] = Action.async {
+  def getIndividualDetails(individualId: String): Action[AnyContent] = Action.async {
     implicit request =>
-      soapService.buildGetIndividualDetailsPayload() match {
+      soapService.buildGetIndividualDetailsPayload(individualId) match {
         case \/-(payload) => {
           logger.debug(s"Constructed GetIndividualDetails payload: ", appConfig.cygnumURL, payload)
           callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetIndividualDetailsResponse)

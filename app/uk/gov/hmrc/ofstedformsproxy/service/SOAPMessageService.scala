@@ -50,7 +50,7 @@ trait SOAPMessageService {
 
   def buildFormSubmissionPayload(node: NodeSeq): String \/ String
 
-  def buildGetIndividualDetailsPayload(): String \/ String
+  def buildGetIndividualDetailsPayload(individualId: String): String \/ String
 }
 
 @Singleton
@@ -82,14 +82,19 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     }
   }
 
-  override def buildGetIndividualDetailsPayload(): String \/ String = {
+  override def buildGetIndividualDetailsPayload(individualId: String): String \/ String = {
     val result: String \/ String = for {
       xmlDocument <- readInXMLPayload(
         <GetData xmlns="http://tempuri.org/">
           <Service>GetIndividualDetails</Service>
-          <InputParameters>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&lt;Parameters&gt;&lt;IDs&gt;&lt;ID&gt;1843835&lt;/ID&gt;&lt;/IDs&gt;&lt;/Parameters&gt;</InputParameters>
-          <Data>{escapePayload(XML.loadString(scala.io.Source.fromFile("/home/pasquale/hmrc/dev/ofsted-forms-proxy/test/uk/gov/hmrc/ofstedformsproxy/cygnum_example_requests/GetIndividualDetails.xml")
-            .getLines.mkString))}</Data>
+          <InputParameters>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&lt;Parameters&gt;&lt;IDs&gt;&lt;ID&gt;{individualId}&lt;/ID&gt;&lt;/IDs&gt;&lt;/Parameters&gt;</InputParameters>
+          <Data>{escapePayload(
+            <Individuals>
+              <Individual>
+                <IndividualID>{individualId}</IndividualID>
+              </Individual>
+            </Individuals>)}
+          </Data>
         </GetData>
       )
       soapMessage <- createSOAPEnvelope(xmlDocument)

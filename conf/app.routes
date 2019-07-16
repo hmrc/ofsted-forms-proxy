@@ -1,7 +1,7 @@
 # microservice specific routes
 
-GET     /geturn                 uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.getUrn()
-POST    /form                   uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.submitForm()
-POST    /getIndividualDetails   uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.getIndividualDetails()
+GET     /geturn                                 uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.getUrn()
+GET     /getIndividualDetails/:individualId     uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.getIndividualDetails(individualId: String)
+POST    /form                                   uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.submitForm()
 
-POST    /notifier               uk.gov.hmrc.ofstedformsproxy.controllers.NotifierController.sendNotification()
+POST    /notifier                               uk.gov.hmrc.ofstedformsproxy.controllers.NotifierController.sendNotification()
