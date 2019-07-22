@@ -67,7 +67,7 @@ class NotifierRequestHandlerSpec extends WordSpec with MustMatchers {
   "send email" ignore {
     val client = new OfstedNotificationClient[Id](new Notifier[Id] {})
     val handler = new NotifierRequestHandler[Id](client)
-    val notifyRequest = NotifyRequest(TemplateId("339fc6bd-8369-4a33-9d1a-e0607c63a1e2"), EmailAddress("pasquale.gatto@digital.hmrc.gov.uk"),
+    val notifyRequest = NotifyRequest(TemplateId("339fc6bd-8369-4a33-9d1a-e0607c63a1e2"), EmailAddress("someone@digital.hmrc.gov.uk"),
       Map("formId" -> "222", "firstName" -> "Tommy", "lastName" -> "Cruise"))
 
     handler.handleRequest(notifyRequest) mustBe Response(200, "")

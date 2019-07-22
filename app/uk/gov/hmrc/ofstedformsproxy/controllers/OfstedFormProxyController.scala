@@ -28,6 +28,7 @@ import scalaz.{-\/, \/-}
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.ofstedformsproxy.config.AppConfig
 import uk.gov.hmrc.ofstedformsproxy.connectors.OutboundServiceConnector
+import uk.gov.hmrc.ofstedformsproxy.handlers.{CygnumResponse, FormSubmissionResponseHandler, OkStatus}
 import uk.gov.hmrc.ofstedformsproxy.logging.OfstedFormProxyLogger
 import uk.gov.hmrc.ofstedformsproxy.models.OutboundCallRequest
 import uk.gov.hmrc.ofstedformsproxy.service.{AuditingService, SOAPMessageService}
@@ -128,20 +129,15 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
     Ok(xmlResponse)
   }
 
-  private def processFormSubmissionResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Result = {
-    val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
-    val tmp: String = (xmlResponse \\ "SendDataResult").text
-    val status: String = (scala.xml.XML.loadString(tmp) \\ "Status").text
-
-    if (!status.isEmpty && status == "0") {
-      logger.debug(s"Send Data service full response: ${xmlResponse.toString}: ", Seq.empty)
-      Ok(Json.obj("status" -> status))
+  private def processFormSubmissionResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Result =
+    FormSubmissionResponseHandler.processFormSubmissionResponse(response.body) match {
+      case res: CygnumResponse if res.status == OkStatus =>
+        logger.debug(s"Send Data service full response: ${res.dataResults}: ", Seq.empty)
+        Ok(Json.obj("status" -> res.status.toString))
+      case res =>
+        logger.error(s"Send Data service response: ${res.dataResults}")
+        BadRequest(res.dataResults)
     }
-    else {
-      logger.error(s"Send Data service response: ${xmlResponse.toString}")
-      BadRequest("Failed to submit form or response with status == 1")
-    }
-  }
 
   private def callOutboundService(outboundCallRequest: OutboundCallRequest, responseHandler: HttpResponse => Result)(implicit hc: HeaderCarrier): Future[Result] = {
     val startTime = LocalDateTime.now
