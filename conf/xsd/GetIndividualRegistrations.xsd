@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:pdt="http://www.govtalk.gov.uk" version="1.0">
+    <xs:include schemaLocation="Common.xsd"/>
+    <xs:element name="Registrations">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="IndividualID" type= "xs:integer"/>
+                <xs:element name="Registration" type="RegistrationType" minOccurs="0" maxOccurs="unbounded" />
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:simpleType name="ReferenceNumberType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="20"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name ="SettingNameType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="150"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="AddressSingleLineType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="255"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="RegistrationStatusDescType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="100"/>
+            <!--<xs:enumeration value="Null"/>
+                  <xs:enumeration value="NotRegistered"/>
+                  <xs:enumeration value="Active"/>
+                  <xs:enumeration value="ApplicationWithdrawn"/>
+                  <xs:enumeration value="Cancelled"/>
+                  <xs:enumeration value="ClosedOpenedInError"/>
+                  <xs:enumeration value="Exempt"/>
+                  <xs:enumeration value="Proposed"/>
+                  <xs:enumeration value="Refused"/>
+                  <xs:enumeration value="Resigned"/>
+                  <xs:enumeration value="Suspended"/>
+                  <xs:enumeration value="Lapsed"/>-->
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="ProvisionTypeDescType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="100"/>
+            <!--<xs:enumeration value="Null"/>
+                  <xs:enumeration value="Childminder"/>
+                  <xs:enumeration value="DayCare"/>
+                  <xs:enumeration value="CMNetwork"/>
+                  <xs:enumeration value="PortageScheme"/>
+                  <xs:enumeration value="IndependentSchool"/>
+                  <xs:enumeration value="ChildrensHome"/>
+                  <xs:enumeration value="VoluntaryAdoptionAgency"/>
+                  <xs:enumeration value="IndependentFosteringAgency"/>
+                  <xs:enumeration value="AdoptionSupportAgency"/>
+                  <xs:enumeration value="ResidentialFamilyCentre"/>
+                  <xs:enumeration value="BoardingSchool"/>
+                  <xs:enumeration value="FurtherEducationCollege"/>
+                  <xs:enumeration value="ResidentialSpecialSchool"/>
+                  <xs:enumeration value="LocalAuthorityAdoptionAgency"/>
+                  <xs:enumeration value="LocalAuthorityFosteringAgency"/>
+                  <xs:enumeration value="PrivateFosteringArrangements"/>
+                  <xs:enumeration value="HomeChildcarer"/>
+                  <xs:enumeration value="ChildminderVCR"/>
+                  <xs:enumeration value="ChildcareOnDomesticPremises"/>
+                  <xs:enumeration value="ChildcareOnNonDomesticPremises"/>-->
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="ProvisionTypeIDType">
+        <xs:restriction base="xs:integer">
+            <!--<xs:enumeration value="0"/>
+                  <xs:enumeration value="1"/>
+                  <xs:enumeration value="2"/>
+                  <xs:enumeration value="3"/>
+                  <xs:enumeration value="4"/>
+                  <xs:enumeration value="5"/>
+                  <xs:enumeration value="11"/>
+                  <xs:enumeration value="12"/>
+                  <xs:enumeration value="13"/>
+                  <xs:enumeration value="14"/>
+                  <xs:enumeration value="15"/>
+                  <xs:enumeration value="16"/>
+                  <xs:enumeration value="17"/>
+                  <xs:enumeration value="18"/>
+                  <xs:enumeration value="19"/>
+                  <xs:enumeration value="20"/>
+                  <xs:enumeration value="21"/>
+                  <xs:enumeration value="30"/>
+                  <xs:enumeration value="31"/>
+                  <xs:enumeration value="32"/>
+                  <xs:enumeration value="33"/>-->
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="AssociationTypeIDType">
+        <xs:restriction base="xs:integer">
+            <xs:enumeration value="0"/>
+            <xs:enumeration value="1"/>
+            <xs:enumeration value="19"/>
+            <xs:enumeration value="9"/>
+            <xs:enumeration value="10"/>
+            <xs:enumeration value="11"/>
+            <xs:enumeration value="12"/>
+            <xs:enumeration value="14"/>
+            <xs:enumeration value="28"/>
+            <xs:enumeration value="30"/>
+            <xs:enumeration value="31"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+
+    <xs:complexType name="RegistrationType">
+        <xs:sequence>
+            <xs:element name="URN" type= "ReferenceNumberType" />
+            <xs:element name="SettingName" type= "SettingNameType" />
+            <xs:element name="SettingAddress" type= "AddressSingleLineType" />
+            <xs:element name="RegistrationDate" type= "xs:date" minOccurs="0" />
+            <xs:element name="RegistrationStatus" type= "RegistrationStatusDescType" />
+            <xs:element name="ProvisionType" type= "ProvisionTypeDescType" />
+            <xs:element name="ProvisionTypeID" type= "ProvisionTypeIDType" />
+            <xs:element name="AssociationTypeID" type= "AssociationTypeIDType" />
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>

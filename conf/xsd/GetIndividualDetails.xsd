@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:pdt="http://www.govtalk.gov.uk" version="1.0">
+    <xs:include schemaLocation="Common.xsd"/>
+    <xs:element name="Individuals">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Individual" type="IndividualType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:complexType name="IndividualType">
+        <xs:sequence>
+            <xs:element name="IndividualID" type="xs:integer"/>
+            <xs:element name="Title" type="xs:string" minOccurs="0"/>
+            <xs:element name="Forenames" type="ForenameType" minOccurs="0"/>
+            <xs:element name="Surname" type="SurnameType" minOccurs="0"/>
+            <xs:element name="Associations" type="AssociationsType"/>
+            <xs:element name="OtherNames" type="OtherNamesType"/>
+            <xs:element name="TelephoneNumbers" type="TelephoneNumberType" minOccurs="0"/>
+            <xs:element name="WorkTelephoneNumber" type="TelephoneNumberType" minOccurs="0"/>
+            <xs:element name="MobileTelephoneNumber" type="TelephoneNumberType" minOccurs="0"/>
+            <xs:element name="ReceiveElecetronicComms" type="YesNoType" minOccurs="0"/>
+            <xs:element name="MainContactNumber" type="xs:integer" minOccurs="0"/>
+            <xs:element name="MainContactNumberDescription" type="MediumDescType" minOccurs="0"/>
+            <xs:element name="Email" type="EmailAddressType" minOccurs="0"/>
+            <xs:element name="IndividualTimestamp" type="TimestampType" minOccurs="0"/>
+            <xs:element name="FaxNumber" type="FaxType" minOccurs="0"/>
+            <xs:element name="MaritalStatusID" type="xs:integer" minOccurs="0"/>
+            <xs:element name="MaritalStatus" type="xs:string" minOccurs="0"/>
+            <xs:element name="FirstLanguage" type="xs:string" minOccurs="0"/>
+            <xs:element name="Sex" type="SexType" minOccurs="0"/>
+            <xs:element name="DOB" type="xs:date" minOccurs="0"/>
+            <xs:element name="EthnicOriginID" type="xs:integer" minOccurs="0"/>
+            <xs:element name="EthnicOrigin" type="xs:string" minOccurs="0"/>
+            <xs:element name="EthnicOriginOther" type="IndvEthnicOriginOtherType" minOccurs="0"/>
+            <xs:element name="FosterParent" type="YesNoType" minOccurs="0"/>
+            <xs:element name="Occupation" type="IndvOccupationType" minOccurs="0"/>
+            <xs:element name="ReleventExperience" type="IndvRelevanceExperienceType" minOccurs="0"/>
+            <xs:element name="Disqulified" type="YesNoType" minOccurs="0"/>
+            <xs:element name="DisqualifiedComments" type="IndvDisqualifiedCommentsType" minOccurs="0"/>
+            <xs:element name="DisqualificationReasonID" type="xs:integer" minOccurs="0"/>
+            <xs:element name="DisqualificationReason" type="MediumDescType" minOccurs="0"/>
+            <xs:element name="Deceased" type="YesNoType" minOccurs="0"/>
+            <xs:element name="Type" type="IndvTypeType" minOccurs="0"/>
+            <xs:element name="RefusedByLA" type="YesNoType" minOccurs="0"/>
+            <xs:element name="LAComments" type="IndvLaCommentsType" minOccurs="0"/>
+            <xs:element name="SuitableContactTime" type="IndvSuitableContactTimeType" minOccurs="0"/>
+            <xs:element name="LivedAbroad" type="YesNoType" minOccurs="0"/>
+            <xs:element name="LivedAbroadReason" type="IndvLivedAbroadReasonType" minOccurs="0"/>
+            <xs:element name="CountryAbroad" type="CountryAbroadType" minOccurs="0"/>
+            <xs:element name="ReligionID" type="xs:integer" minOccurs="0"/>
+            <xs:element name="Religion" type="MediumDescType" minOccurs="0"/>
+            <xs:element name="AnyDisability" type="IndvAnyDisabilityType" minOccurs="0"/>
+            <xs:element name="DisabilityDescription" type="IndvDisabilityTextType" minOccurs="0"/>
+            <xs:element name="UKResident" type="YesNoType" minOccurs="0"/>
+            <xs:element name="ISARegNumber" type="IsaRegistrationNumberType" minOccurs="0"/>
+            <xs:element name="CurrentAddress" type="AddressType" minOccurs="0"/>
+            <xs:element name="PreviousAddresses" type="AddressesType" minOccurs="0"/>
+            <xs:element name="Checks" type="ChecksType" />
+            <xs:element name="Suitabilities" type="SuitabilitiesType" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="IndvEthnicOriginOtherType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="20"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="IndvOccupationType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="40"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="IndvRelevanceExperienceType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="500"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="IndvDisqualifiedCommentsType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="500"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="IndvTypeType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="3"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="IndvLaCommentsType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="4000"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="IndvSuitableContactTimeType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="50"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="IndvAnyDisabilityType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="1"/>
+            <xs:enumeration value="Y"/>
+            <xs:enumeration value="N"/>
+            <xs:enumeration value="P"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="IndvDisabilityTextType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="200"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="IndvLivedAbroadReasonType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="200"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="CountryAbroadType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="200"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+</xs:schema>
