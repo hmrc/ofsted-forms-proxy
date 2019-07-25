@@ -136,6 +136,20 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       }
   }
 
+  def getELSProviderDetails(providerId: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      soapService.buildGetELSProviderDetailsPayload(providerId) match {
+        case \/-(payload) => {
+          logger.debug(s"Constructed GetELSProvideDetails payload: ", appConfig.cygnumURL, payload)
+          callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetDataResponse)
+        }
+        case -\/(error) => {
+          logger.error("Failed to build the GetELSProvideDetails SOAP Payload")
+          Future.successful(BadRequest(error))
+        }
+      }
+  }
+
   private def processGetURNResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Result = {
     val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
     val tmp: String = (xmlResponse \\ "GetDataResult").text

@@ -55,6 +55,8 @@ trait SOAPMessageService {
   def buildGetRegistrationDetailsPayload(urn: String): String \/ String
 
   def buildGetOrganisationDetailsPayload(organisationId: String): String \/ String
+
+  def buildGetELSProviderDetailsPayload(providerId: String): String \/ String
 }
 
 @Singleton
@@ -110,6 +112,14 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
       <Organisations>
         <OrganisationID>{organisationId}</OrganisationID>
       </Organisations>
+    )
+
+  override def buildGetELSProviderDetailsPayload(providerId: String): String \/ String =
+    buildGetDataPayload(providerId,
+      <Service>GetELSProviderDetails</Service>,
+      <Providers>
+        <ProviderID>{providerId}</ProviderID>
+      </Providers>
     )
 
 

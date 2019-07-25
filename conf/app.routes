@@ -4,6 +4,8 @@ GET     /geturn                                 uk.gov.hmrc.ofstedformsproxy.con
 GET     /getIndividualDetails/:individualId     uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.getIndividualDetails(individualId: String)
 GET     /getRegistrationDetails/:urn            uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.getRegistrationDetails(urn: String)
 GET     /getOrganisationDetails/:organisationId uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.getOrganisationDetails(organisationId: String)
+GET     /getELSProviderDetails/:providerId      uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.getELSProviderDetails(providerId: String)
+
 POST    /form                                   uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.submitForm()
 
 POST    /notifier                               uk.gov.hmrc.ofstedformsproxy.controllers.NotifierController.sendNotification()
