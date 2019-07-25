@@ -52,7 +52,9 @@ trait SOAPMessageService {
 
   def buildGetIndividualDetailsPayload(individualId: String): String \/ String
 
-  def buildGetRegistrationDetailsPayload(individualId: String): String \/ String
+  def buildGetRegistrationDetailsPayload(urn: String): String \/ String
+
+  def buildGetOrganisationDetailsPayload(organisationId: String): String \/ String
 }
 
 @Singleton
@@ -84,34 +86,39 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     }
   }
 
-  override def buildGetIndividualDetailsPayload(individualId: String): String \/ String = for {
-      xmlDocument <- readInXMLPayload(
-        <GetData xmlns="http://tempuri.org/">
-          <Service>GetIndividualDetails</Service>
-          <InputParameters>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&lt;Parameters&gt;&lt;IDs&gt;&lt;ID&gt;{individualId}&lt;/ID&gt;&lt;/IDs&gt;&lt;/Parameters&gt;</InputParameters>
-          <Data>{escapePayload(
-            <Individuals>
-              <Individual>
-                <IndividualID>{individualId}</IndividualID>
-              </Individual>
-            </Individuals>)}
-          </Data>
-        </GetData>
-      )
-      soapMessage <- createSOAPEnvelope(xmlDocument)
-      signedSoapMessage <- signSOAPMessage(soapMessage, GetData)
-    } yield stringifySoapMessage(signedSoapMessage)
+  override def buildGetIndividualDetailsPayload(individualId: String): String \/ String =
+    buildGetDataPayload(individualId,
+      <Service>GetIndividualDetails</Service>,
+      <Individuals>
+        <Individual>
+          <IndividualID>{individualId}</IndividualID>
+        </Individual>
+      </Individuals>
+    )
 
-  override def buildGetRegistrationDetailsPayload(individualId: String): String \/ String = for {
+  override def buildGetRegistrationDetailsPayload(urn: String): String \/ String =
+    buildGetDataPayload(urn,
+      <Service>GetRegistrationDetails</Service>,
+      <Registrations>
+        <URN>{urn}</URN>
+      </Registrations>
+    )
+
+  override def buildGetOrganisationDetailsPayload(organisationId: String): String \/ String =
+    buildGetDataPayload(organisationId,
+      <Service>GetOrganisationDetails</Service>,
+      <Organisations>
+        <OrganisationID>{organisationId}</OrganisationID>
+      </Organisations>
+    )
+
+
+  private def buildGetDataPayload(id: String, serviceName: NodeSeq, nestedElm: NodeSeq): String \/ String = for {
       xmlDocument <- readInXMLPayload(
         <GetData xmlns="http://tempuri.org/">
-          <Service>GetRegistrationDetails</Service>
-          <InputParameters>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&lt;Parameters&gt;&lt;IDs&gt;&lt;ID&gt;{individualId}&lt;/ID&gt;&lt;/IDs&gt;&lt;/Parameters&gt;</InputParameters>
-          <Data>{escapePayload(
-            <Registrations>
-              <URN>{individualId}</URN>
-            </Registrations>)}
-          </Data>
+          {serviceName}
+          <InputParameters>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&lt;Parameters&gt;&lt;IDs&gt;&lt;ID&gt;{id}&lt;/ID&gt;&lt;/IDs&gt;&lt;/Parameters&gt;</InputParameters>
+          <Data>{escapePayload(nestedElm)}</Data>
         </GetData>
       )
       soapMessage <- createSOAPEnvelope(xmlDocument)

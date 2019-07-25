@@ -99,7 +99,7 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       soapService.buildGetIndividualDetailsPayload(individualId) match {
         case \/-(payload) => {
           logger.debug(s"Constructed GetIndividualDetails payload: ", appConfig.cygnumURL, payload)
-          callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetIndividualDetailsResponse)
+          callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetDataResponse)
         }
         case -\/(error) => {
           logger.error("Failed to build the GetIndividualDetails SOAP Payload")
@@ -113,10 +113,24 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       soapService.buildGetRegistrationDetailsPayload(urn) match {
         case \/-(payload) => {
           logger.debug(s"Constructed GetRegistrationDetails payload: ", appConfig.cygnumURL, payload)
-          callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetIndividualDetailsResponse)
+          callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetDataResponse)
         }
         case -\/(error) => {
           logger.error("Failed to build the GetRegistrationDetails SOAP Payload")
+          Future.successful(BadRequest(error))
+        }
+      }
+  }
+
+  def getOrganisationDetails(organisationId: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      soapService.buildGetOrganisationDetailsPayload(organisationId) match {
+        case \/-(payload) => {
+          logger.debug(s"Constructed GetOrganisationDetails payload: ", appConfig.cygnumURL, payload)
+          callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetDataResponse)
+        }
+        case -\/(error) => {
+          logger.error("Failed to build the GetOrganisationDetails SOAP Payload")
           Future.successful(BadRequest(error))
         }
       }
@@ -137,7 +151,7 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
     }
   }
 
-  private def processGetIndividualDetailsResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Result = {
+  private def processGetDataResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Result = {
     val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
     logger.debug(s"Get Data service full response: ${xmlResponse.toString}: ", Seq.empty)
     Ok(xmlResponse)
