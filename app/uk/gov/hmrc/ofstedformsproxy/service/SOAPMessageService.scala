@@ -51,6 +51,8 @@ trait SOAPMessageService {
   def buildFormSubmissionPayload(node: NodeSeq): String \/ String
 
   def buildGetIndividualDetailsPayload(individualId: String): String \/ String
+
+  def buildGetRegistrationDetailsPayload(individualId: String): String \/ String
 }
 
 @Singleton
@@ -82,8 +84,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     }
   }
 
-  override def buildGetIndividualDetailsPayload(individualId: String): String \/ String = {
-    val result: String \/ String = for {
+  override def buildGetIndividualDetailsPayload(individualId: String): String \/ String = for {
       xmlDocument <- readInXMLPayload(
         <GetData xmlns="http://tempuri.org/">
           <Service>GetIndividualDetails</Service>
@@ -101,12 +102,21 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
       signedSoapMessage <- signSOAPMessage(soapMessage, GetData)
     } yield stringifySoapMessage(signedSoapMessage)
 
-    result match {
-      case \/-(xmlPayload) => \/-(xmlPayload)
-      case -\/(error) => -\/(error)
-    }
-
-  }
+  override def buildGetRegistrationDetailsPayload(individualId: String): String \/ String = for {
+      xmlDocument <- readInXMLPayload(
+        <GetData xmlns="http://tempuri.org/">
+          <Service>GetRegistrationDetails</Service>
+          <InputParameters>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&lt;Parameters&gt;&lt;IDs&gt;&lt;ID&gt;{individualId}&lt;/ID&gt;&lt;/IDs&gt;&lt;/Parameters&gt;</InputParameters>
+          <Data>{escapePayload(
+            <Registrations>
+              <URN>{individualId}</URN>
+            </Registrations>)}
+          </Data>
+        </GetData>
+      )
+      soapMessage <- createSOAPEnvelope(xmlDocument)
+      signedSoapMessage <- signSOAPMessage(soapMessage, GetData)
+    } yield stringifySoapMessage(signedSoapMessage)
 
   private def escapePayload(node: NodeSeq): String =
     node.toString

@@ -108,6 +108,20 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       }
   }
 
+  def getRegistrationDetails(urn: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      soapService.buildGetRegistrationDetailsPayload(urn) match {
+        case \/-(payload) => {
+          logger.debug(s"Constructed GetRegistrationDetails payload: ", appConfig.cygnumURL, payload)
+          callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetIndividualDetailsResponse)
+        }
+        case -\/(error) => {
+          logger.error("Failed to build the GetRegistrationDetails SOAP Payload")
+          Future.successful(BadRequest(error))
+        }
+      }
+  }
+
   private def processGetURNResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Result = {
     val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
     val tmp: String = (xmlResponse \\ "GetDataResult").text
