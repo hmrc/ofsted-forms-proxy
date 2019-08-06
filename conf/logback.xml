@@ -49,6 +49,8 @@
 
     <logger name="application" level="TRACE"/>
 
+    <logger name="ofsted-forms-proxy" level="DEBUG"/>
+
     <logger name="connectors" level="TRACE">
         <appender-ref ref="STDOUT"/>
     </logger>
