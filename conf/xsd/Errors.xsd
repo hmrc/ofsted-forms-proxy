@@ -1,0 +1,51 @@
+<xs:schema attributeFormDefault="unqualified" version="2.0"  elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!--<xs:include schemaLocation="InfoType.xsd" />-->
+  
+  <xs:element name="Reply">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Status" type="xs:integer" minOccurs ="1" maxOccurs ="1" />
+        <xs:element name="InvocationID" type="xs:integer" minOccurs ="1" maxOccurs ="1" />
+        <xs:element name="Errors" minOccurs ="0" maxOccurs ="1" type="WSErrorsType"/>
+        <xs:element name="Attachments" type="AttachmentsType" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="WSErrorsType">
+    <xs:sequence>
+      <xs:element name="Error" maxOccurs="unbounded" minOccurs ="1" type="WSErrorType">
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="WSErrorType">
+    <xs:sequence>
+      <xs:element name="Timestamp" type="xs:string" minOccurs="0" />
+      <xs:element name="Code" type="xs:integer"  maxOccurs ="1" minOccurs ="1" />
+      <xs:element name="Description" type="xs:string"  maxOccurs ="1" minOccurs ="1" />
+      <xs:element name="Record" type="xs:string"   maxOccurs ="1" minOccurs ="1" />
+      <xs:element name="Info" type="xs:string" maxOccurs ="1" minOccurs ="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AttachmentsType">
+    <xs:sequence>
+      <xs:element name="Attachment" type="AttachmentType" minOccurs ="0" maxOccurs ="unbounded">
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AttachmentType">
+
+    <xs:sequence>
+      <xs:element name="Name" type="xs:string" minOccurs="0"/>
+      <xs:element name="Extension" type="xs:string" minOccurs="0"/>
+      <xs:element name="Data" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+
+  </xs:complexType>
+
+
+</xs:schema>

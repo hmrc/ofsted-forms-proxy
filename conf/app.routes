@@ -1,6 +1,7 @@
 # microservice specific routes
 
 GET     /geturn                                 uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.getUrn()
+POST    /geturns                                uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.getUrns()
 GET     /getIndividualDetails/:individualId     uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.getIndividualDetails(individualId: String)
 GET     /getRegistrationDetails/:urn            uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.getRegistrationDetails(urn: String)
 GET     /getOrganisationDetails/:organisationId uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.getOrganisationDetails(organisationId: String)

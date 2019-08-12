@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:pdt="http://www.govtalk.gov.uk" version="1.0">
+  <xs:include schemaLocation="Common.xsd"/>
+  <xs:element name="Individuals">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Individual" type="IndividualType" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="IndividualType">
+    <xs:sequence>
+      <xs:element name="IndividualID" type="xs:integer"/>
+      <xs:element name="HomeTelephoneNumber" type="TelephoneNumberType" minOccurs="0"/>
+      <xs:element name="WorkTelephoneNumber" type="TelephoneNumberType" minOccurs="0"/>
+      <xs:element name="MobileTelephoneNumber" type="TelephoneNumberType" minOccurs="0"/>
+      <xs:element name="ReceiveElectronicComms" type="YesNoType" minOccurs="0"/>
+      <xs:element name="MainContactNumber" type="xs:integer" minOccurs="0"/>
+      <xs:element name="Email" type="EmailAddressType" minOccurs="0"/>
+      <xs:element name="Timestamp" type="TimestampType" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+  </xs:schema>

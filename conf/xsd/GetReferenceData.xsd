@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:pdt="http://www.govtalk.gov.uk" version="1.0">
+  <xs:include schemaLocation="Common.xsd"/>
+  <xs:element name="GetReferenceData">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="ReferenceData" type="ReferenceDataType" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:complexType name="ReferenceDataType">
+    <xs:sequence>
+      <xs:element name="Name" type ="xs:string" />
+      <xs:element name="ReferenceDataItem" type ="ReferenceDataItemType" minOccurs="0" maxOccurs="unbounded" />
+
+
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ReferenceDataItemType">
+    <xs:sequence>
+      <xs:element name="ID" type ="xs:string"  minOccurs="0"/>
+      <xs:element name="ShortDesc" type ="xs:string" minOccurs="0" />
+      <xs:element name="MediumDesc" type ="xs:string" minOccurs="0" />
+      <xs:element name="Sequence" type ="xs:short" minOccurs="0" />
+      <xs:element name="FilterId" type ="xs:int" minOccurs="0" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema>

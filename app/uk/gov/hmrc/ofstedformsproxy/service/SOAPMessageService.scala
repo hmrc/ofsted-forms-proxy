@@ -48,6 +48,8 @@ import scala.xml.{NodeSeq, XML}
 trait SOAPMessageService {
   def buildGetURNPayload(): String \/ String
 
+  def buildGetURNsPayload(referenceNumberTypes: Seq[String]): String \/ String
+
   def buildFormSubmissionPayload(node: NodeSeq): String \/ String
 
   def buildGetIndividualDetailsPayload(individualId: String): String \/ String
@@ -154,6 +156,15 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
 
   }
 
+  override def buildGetURNsPayload(referenceNumberTypes: Seq[String]): String \/ String =
+    buildGetDataPayload(
+      "",
+      <Service>GetNewURN</Service>,
+      <URNs>{
+        referenceNumberTypes.map { rn => <URN>{rn}</URN> }
+      }</URNs>
+    )
+
   private def stringifySoapMessage(soapMessage: SOAPMessage): String = {
     val file = File.createTempFile(getClass.getSimpleName, ".tmp")
     val fos = new FileOutputStream(file)
@@ -189,6 +200,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
         case Failure(e: ParserConfigurationException) => -\/(e.getMessage)
         case Failure(e: SAXException) => -\/(e.getMessage)
         case Failure(e: IOException) => -\/(e.getMessage)
+        case Failure(e) => throw e
       }
       case None => {
         -\/("XML payload file does not exist.")
@@ -219,6 +231,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
       case Success(soapMessage) => \/-(soapMessage)
       case Failure(e: SOAPException) => -\/(e.getMessage)
       case Failure(e: DOMException) => -\/(e.getMessage)
+      case Failure(e) => throw e
     }
 
   private def signSOAPMessage(soapMessage: SOAPMessage, action: ServiceType): String \/ SOAPMessage = {
@@ -250,7 +263,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
       soapMessage
     } match {
       case Success(signedSoapMessage) => \/-(signedSoapMessage)
-      case Failure(e: Exception) => throw e
+      case Failure(e) => throw e
     }
 
   }

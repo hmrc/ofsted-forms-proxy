@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:include schemaLocation="../Common.xsd"/>
+  <xs:include schemaLocation="NotificationsCommon.xsd"/>
+
+  <xs:element name="StatNotifications">
+    <xs:complexType>
+      <xs:sequence>
+
+        <xs:element name="Notification" minOccurs="0"  maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+
+              <xs:element name="NotifierDetails" minOccurs="1"  maxOccurs="1">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="NotificationDate" type="SqlDateTime" minOccurs="1"  maxOccurs="1" />
+                    <xs:element name="URN" type="xs:string" minOccurs="1"  maxOccurs="1" />
+                    <xs:element name="RegistrationId" type="xs:string" minOccurs="1"  maxOccurs="1" />
+                    <xs:element name="Name" type="xs:string" minOccurs="1"  maxOccurs="1" />
+                    <xs:element name="Address" type="AddressType" minOccurs="1"  maxOccurs="1" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+
+              <xs:element name="IncidentDetails" minOccurs="1"  maxOccurs="1">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="Reason" type="xs:int" minOccurs="1"  maxOccurs="unbounded" />
+                    <xs:element name="IncidentDate" type="SqlDateTime" minOccurs="1"  maxOccurs="1" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+
+              <xs:element name="Description" minOccurs="0"  maxOccurs="1">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="IncidentDescription" type="xs:string" minOccurs="0"  maxOccurs="1" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+
+              <xs:element name="Outcomes" minOccurs="0"  maxOccurs="1">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="IncidentOutcome" type="xs:string" minOccurs="0"  maxOccurs="1" />
+                    <xs:element name="ActionsToPreventOccurrence" type="xs:string" minOccurs="0"  maxOccurs="1" />
+                    <xs:element name="AdditionalInformation" type="xs:string" minOccurs="0"  maxOccurs="1" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+
+              <xs:element name="MeridioReference" type="xs:string" minOccurs="1"  maxOccurs="1" />
+
+			  <xs:element name="Reference" type="xs:int" minOccurs="1"  maxOccurs="1" />
+
+              <xs:element name="Documents" type="NotificationDocumentsType" minOccurs="1"  maxOccurs="1" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

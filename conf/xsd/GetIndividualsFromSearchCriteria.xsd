@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:pdt="http://www.govtalk.gov.uk" version="1.0">
+  <xs:include schemaLocation="Common.xsd"/>
+  <xs:element name="Individuals">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Individual" type="IndividualType" minOccurs="0" maxOccurs="unbounded" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="IndividualType">
+    <xs:sequence>
+      <xs:element name="IndividualID" type="xs:integer"/>
+      <xs:element name="Surname" type="SurnameType" minOccurs="0"/>
+      <xs:element name="Forenames" type="ForenameType" minOccurs="0"/>
+      <xs:element name="IndividualAddress" type="AddressLineType" minOccurs="0" />
+      <xs:element name="IndividualPostCode" type="PostCodeType" minOccurs="0"/>
+      <xs:element name="AssociationType" type="ShortDescType" minOccurs="0"/>
+      <xs:element name="Comments" type="AssociationCommentsType" minOccurs="0"/>
+      <xs:element name="DateFrom" type="xs:date" minOccurs="0"/>
+      <xs:element name="DateTo" type="xs:date" minOccurs="0"/>
+      <xs:element name="SettingName" type="SettingNameType" minOccurs="0"/>
+      <xs:element name="SettingAddress" type="AddressLineType" minOccurs="0"/>
+      <xs:element name="SettingPostCode" type="PostCodeType" minOccurs="0"/>
+      <xs:element name="DOB" type="xs:date" minOccurs="0"/>
+      <xs:element name="Disqualified" type="YesNoType" minOccurs="0"/>
+      <xs:element name="Deceased" type="YesNoType" minOccurs="0"/>
+      <xs:element name="ISARegistrationNo" type="IsaRegistrationNumberType" minOccurs="0"/>
+      <xs:element name="URN" type="ReferenceNumberType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+ 
+
+</xs:schema>

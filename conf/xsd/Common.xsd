@@ -1,0 +1,597 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" version="2.2" id="Common">
+  <!--<xs:simpleType name ="YNType" >
+    <xs:restriction base ="xs:string">
+      <xs:enumeration value ="Y"/>
+      <xs:enumeration value ="N"/>
+    </xs:restriction>
+  </xs:simpleType>-->
+
+  <xs:simpleType name ="YesNoType" >
+    <xs:restriction base ="xs:string">
+      <xs:enumeration value ="Null"/>
+      <xs:enumeration value ="Yes"/>
+      <xs:enumeration value ="No"/>
+    </xs:restriction>
+
+  </xs:simpleType>
+  <xs:simpleType name="SexType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="M" />
+      <xs:enumeration value="F" />
+      <xs:enumeration value="U" />
+      <xs:enumeration value="P" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name ="TitleType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Mr" />
+      <xs:enumeration value="Mrs" />
+      <xs:enumeration value="Miss" />
+      <xs:enumeration value="Ms" />
+      <xs:enumeration value="Other" />
+      <xs:enumeration value="Master" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ForenameType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="50"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name ="SurnameType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="30"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name ="EmailAddressType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="50"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name ="TelephoneNumberType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="30"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name ="FaxType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="20"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name ="ShortDescType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="50"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name ="MediumDescType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="80"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name ="OrganisationNameType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="100"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name ="SettingNameType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="150"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="TimestampType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="18"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name ="ProvisionTypeIdType">
+    <xs:restriction base="xs:int">
+      <xs:enumeration value="0"/>
+      <xs:enumeration value="1"/>
+      <xs:enumeration value="2"/>
+      <xs:enumeration value="3"/>
+      <xs:enumeration value="4"/>
+      <xs:enumeration value="5"/>
+      <xs:enumeration value="11"/>
+      <xs:enumeration value="12"/>
+      <xs:enumeration value="13"/>
+      <xs:enumeration value="14"/>
+      <xs:enumeration value="15"/>
+      <xs:enumeration value="16"/>
+      <xs:enumeration value="17"/>
+      <xs:enumeration value="18"/>
+      <xs:enumeration value="19"/>
+      <xs:enumeration value="20"/>
+      <xs:enumeration value="21"/>
+      <xs:enumeration value="30"/>
+      <xs:enumeration value="31"/>
+      <xs:enumeration value="32"/>
+      <xs:enumeration value="33"/>
+      <xs:enumeration value="34"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+
+
+
+  <xs:simpleType name="AreaIdType">
+    <xs:restriction base="xs:int">
+      <xs:enumeration value="101" />
+      <xs:enumeration value="102" />
+      <xs:enumeration value="103" />
+      <xs:enumeration value="104" />
+      <xs:enumeration value="105" />
+      <xs:enumeration value="106" />
+      <xs:enumeration value="107" />
+      <xs:enumeration value="108" />
+      <xs:enumeration value="109" />
+      <xs:enumeration value="110" />
+      <xs:enumeration value="111" />
+      <xs:enumeration value="112" />
+      <xs:enumeration value="113" />
+      <xs:enumeration value="114" />
+      <xs:enumeration value="115" />
+      <xs:enumeration value="116" />
+      <xs:enumeration value="117" />
+      <xs:enumeration value="118" />
+      <xs:enumeration value="119" />
+      <xs:enumeration value="120" />
+      <xs:enumeration value="121" />
+      <xs:enumeration value="122" />
+      <xs:enumeration value="123" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name ="RegionIdType">
+    <xs:restriction base="xs:int">
+      <xs:enumeration value="11" />
+      <xs:enumeration value="12" />
+      <xs:enumeration value="13" />
+      <xs:enumeration value="14" />
+      <xs:enumeration value="15" />
+      <xs:enumeration value="21" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name ="LocalAuthorityIDType">
+    <xs:restriction base="xs:integer">
+    <!--<xs:restriction base="xs:string">
+      <xs:enumeration value="11"/>
+      <xs:enumeration value="12"/>
+      <xs:enumeration value="13"/>
+      <xs:enumeration value="14"/>
+      <xs:enumeration value="15"/>
+      <xs:enumeration value="21"/>-->
+      <!--FULL LIST TO BE ADDED-->
+    </xs:restriction>
+  </xs:simpleType>
+
+
+  <xs:simpleType name="CompanyNameType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="100"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="CountyType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="50"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="TelephoneLongType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="150"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="PostCodeType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="9"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="NameType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="50"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="GenericNameType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="100"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="TownType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="50"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ReferenceNumberType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="20"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="OrganisationTypeIDType">
+    <xs:restriction base="xs:int">
+      <xs:enumeration value="0"/>
+      <xs:enumeration value="1"/>
+      <xs:enumeration value="2"/>
+      <xs:enumeration value="3"/>
+      <xs:enumeration value="4"/>
+      <xs:enumeration value="5"/>
+      <xs:enumeration value="6"/>
+      <xs:enumeration value="7"/>
+      <xs:enumeration value="8"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="OrganisationTypeDescType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="100"/>
+      <!--<xs:enumeration value="Unknown"/>
+          <xs:enumeration value="LocalAuthority"/>
+          <xs:enumeration value="Organisation"/>
+          <xs:enumeration value="Committee"/>
+          <xs:enumeration value="Partnership"/>
+          <xs:enumeration value="InformalPartnership"/>
+          <xs:enumeration value="StatutoryBody"/>
+          <xs:enumeration value="Company"/>
+          <xs:enumeration value="Other"/>-->
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="RegistrationStatusIDType">
+    <xs:restriction base="xs:integer">
+      <xs:enumeration value="0"/>
+      <xs:enumeration value="1"/>
+      <xs:enumeration value="2"/>
+      <xs:enumeration value="3"/>
+      <xs:enumeration value="4"/>
+      <xs:enumeration value="5"/>
+      <xs:enumeration value="6"/>
+      <xs:enumeration value="7"/>
+      <xs:enumeration value="8"/>
+      <xs:enumeration value="9"/>
+      <xs:enumeration value="10"/>
+      <xs:enumeration value="11"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="RegistrationStatusDescType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="100"/>
+      <!--<xs:enumeration value="Null"/>
+            <xs:enumeration value="NotRegistered"/>
+            <xs:enumeration value="Active"/>
+            <xs:enumeration value="ApplicationWithdrawn"/>
+            <xs:enumeration value="Cancelled"/>
+            <xs:enumeration value="ClosedOpenedInError"/>
+            <xs:enumeration value="Exempt"/>
+            <xs:enumeration value="Proposed"/>
+            <xs:enumeration value="Refused"/>
+            <xs:enumeration value="Resigned"/>
+            <xs:enumeration value="Suspended"/>
+            <xs:enumeration value="Lapsed"/>-->
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ProvisionTypeDescType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="100"/>
+      <!--<xs:enumeration value="Null"/>
+			<xs:enumeration value="Childminder"/>
+			<xs:enumeration value="DayCare"/>
+			<xs:enumeration value="CMNetwork"/>
+			<xs:enumeration value="PortageScheme"/>
+			<xs:enumeration value="IndependentSchool"/>
+			<xs:enumeration value="ChildrensHome"/>
+			<xs:enumeration value="VoluntaryAdoptionAgency"/>
+			<xs:enumeration value="IndependentFosteringAgency"/>
+			<xs:enumeration value="AdoptionSupportAgency"/>
+			<xs:enumeration value="ResidentialFamilyCentre"/>
+			<xs:enumeration value="BoardingSchool"/>
+			<xs:enumeration value="FurtherEducationCollege"/>
+			<xs:enumeration value="ResidentialSpecialSchool"/>
+			<xs:enumeration value="LocalAuthorityAdoptionAgency"/>
+			<xs:enumeration value="LocalAuthorityFosteringAgency"/>
+			<xs:enumeration value="PrivateFosteringArrangements"/>
+			<xs:enumeration value="HomeChildcarer"/>
+			<xs:enumeration value="ChildminderVCR"/>
+			<xs:enumeration value="ChildcareOnDomesticPremises"/>
+			<xs:enumeration value="ChildcareOnNonDomesticPremises"/>-->
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ProvisionTypeIDType">
+    <xs:restriction base="xs:integer">
+      <!--<xs:enumeration value="0"/>
+			<xs:enumeration value="1"/>
+			<xs:enumeration value="2"/>
+			<xs:enumeration value="3"/>
+			<xs:enumeration value="4"/>
+			<xs:enumeration value="5"/>
+			<xs:enumeration value="11"/>
+			<xs:enumeration value="12"/>
+			<xs:enumeration value="13"/>
+			<xs:enumeration value="14"/>
+			<xs:enumeration value="15"/>
+			<xs:enumeration value="16"/>
+			<xs:enumeration value="17"/>
+			<xs:enumeration value="18"/>
+			<xs:enumeration value="19"/>
+			<xs:enumeration value="20"/>
+			<xs:enumeration value="21"/>
+			<xs:enumeration value="30"/>
+			<xs:enumeration value="31"/>
+			<xs:enumeration value="32"/>
+			<xs:enumeration value="33"/>-->
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="AssociationCommentsType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="100"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="IsaRegistrationNumberType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="20"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="AssociationsType">
+    <xs:sequence>
+      <xs:element name="Association" type="AssociationType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="AssociationType">
+    <xs:sequence>
+      <xs:element name="Comments" type="AssociationCommentsType" minOccurs="0"/>
+      <xs:element name="Paid" type="YesNoType" minOccurs="0"/>
+      <xs:element name="DateFrom" type="xs:date" minOccurs="0"/>
+      <xs:element name="DateTo" type="xs:date" minOccurs="0"/>
+      <xs:element name="TypeID" type="AssociationTypeIDType" minOccurs="1"/>
+      <xs:element name="Type" type="xs:string" minOccurs="0"/>
+      <xs:element name="SettingName" type="SettingNameType" minOccurs ="0"/>
+      <xs:element name="SettingAddress1" type="AddressLineType" minOccurs ="0"/>
+      <xs:element name="SettingPostCode" type="PostCodeType" minOccurs ="0"/>
+      <xs:element name="AssociationID" type="xs:integer" minOccurs ="0"/>
+      <xs:element name="RegistrationID" type="xs:integer" minOccurs ="0"/>
+      <xs:element name="RegistrationStatus" type="xs:string" minOccurs ="0"/>
+      <xs:element name="Timestamp" type="TimestampType" minOccurs ="0"/>
+      <xs:element name="IndividualID" type="xs:integer" minOccurs ="1" />
+      <xs:element name="URN" type="ReferenceNumberType" minOccurs="0"/>
+      <xs:element name="ProvisionTypeID" type="ProvisionTypeIDType" minOccurs ="0"/>
+      <xs:element name="WorkWithChildren" type="YesNoType" minOccurs ="0"/>
+      <xs:element name="PartOfRatio" type="YesNoType" minOccurs ="0"/>
+      <xs:element name="ApplicationReceived" type="YesNoType" minOccurs ="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:simpleType name="AssociationTypeIDType">
+    <xs:restriction base="xs:integer">
+      <xs:enumeration value="0"/>
+      <xs:enumeration value="1"/>
+      <xs:enumeration value="19"/>
+      <xs:enumeration value="9"/>
+      <xs:enumeration value="10"/>
+      <xs:enumeration value="11"/>
+      <xs:enumeration value="12"/>
+      <xs:enumeration value="14"/>
+      <xs:enumeration value="28"/>
+      <xs:enumeration value="30"/>
+      <xs:enumeration value="31"/>
+      <xs:enumeration value="33"/>
+      <xs:enumeration value="34"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="AssociationTypeDescType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Null"/>
+      <xs:enumeration value="Provider"/>
+      <xs:enumeration value="NominatedPerson"/>
+      <xs:enumeration value="HouseholdUnder16"/>
+      <xs:enumeration value="HouseholdOver16"/>
+      <xs:enumeration value="Astnt_coCM"/>
+      <xs:enumeration value="Childminder"/>
+      <xs:enumeration value="Manager"/>
+      <xs:enumeration value="Billing"/>
+      <xs:enumeration value="RegisteredManager"/>
+      <xs:enumeration value="RegisteredIndividual"/>
+      <xs:enumeration value="AdditionalContact"/>
+      <xs:enumeration value="AdditionalContactSEF"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="OtherNameTypeIDType">
+    <xs:restriction base="xs:integer">
+      <xs:enumeration value="1"/>
+      <xs:enumeration value="2"/>
+      <xs:enumeration value="3"/>
+      <xs:enumeration value="4"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="OtherNameTypeDescType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Null"/>
+      <xs:enumeration value="Name at Birth"/>
+      <xs:enumeration value="Former Name"/>
+      <xs:enumeration value="Any other"/>
+      <xs:enumeration value="LA Prev Name"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+
+  <xs:complexType name="OtherNamesType">
+    <xs:sequence>
+      <xs:element name="OtherName" type="OtherNameType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="OtherNameType">
+    <xs:sequence>
+      <xs:element name="FirstName" type="xs:string" minOccurs="0"/>
+      <xs:element name="Surname" type="xs:string" minOccurs="0"/>
+      <xs:element name="DateFrom" type="xs:dateTime" minOccurs="0" />
+      <xs:element name="DateTo" type="xs:dateTime" minOccurs="0" />
+      <xs:element name="ID" type="xs:int" minOccurs="0"/>
+      <xs:element name="OtherNameTypeDesc" type="OtherNameTypeDescType" minOccurs="0"/>
+      <xs:element name="OtherNameTypeID" type="OtherNameTypeIDType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+
+  <!-- temporarily renamed from OtherNameType until types can be merged -->
+ 
+  <xs:simpleType name="ApplicationStatusIDType">
+    <xs:restriction base="xs:integer">
+      <xs:enumeration value="1"/>
+      <xs:enumeration value="2"/>
+      <xs:enumeration value="3"/>
+      <xs:enumeration value="4 "/>
+      <xs:enumeration value="5"/>
+      <xs:enumeration value="6"/>
+      <xs:enumeration value="7"/>
+      <xs:enumeration value="8"/>
+      <xs:enumeration value="9"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ApplicationStatusDescType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Initiated"/>
+      <xs:enumeration value="ReqChecks"/>
+      <xs:enumeration value="ChecksInProg"/>
+      <xs:enumeration value="ProcToVisit "/>
+      <xs:enumeration value="Accepted"/>
+      <xs:enumeration value="Refused"/>
+      <xs:enumeration value="Closed_OIE"/>
+      <xs:enumeration value="AppWithdrawn"/>
+      <xs:enumeration value="IncUnpaidFee"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="AddressesType">
+    <xs:sequence>
+      <xs:element name="Address" type="AddressType" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AddressType">
+    <xs:sequence>
+      <xs:element name="ID" type="xs:integer" minOccurs="0"/>
+      <xs:element name="Address1" type="xs:string" minOccurs="1" />
+      <xs:element name="Address2" type="xs:string" minOccurs="1" />
+      <xs:element name="Address3" type="xs:string" minOccurs="0"/>
+      <xs:element name="Town" type="xs:string" minOccurs="1" />
+      <xs:element name="County" type="xs:string" minOccurs="1" />
+      <xs:element name="PostCode" type="xs:string" minOccurs="1" />
+      <xs:element name="LocalAuthorityDescription" type="xs:string" minOccurs="1" />
+      <xs:element name="LocalAuthorityCode" type="xs:string" minOccurs="1" />
+      <xs:element name="RegionId" type="RegionIdType" minOccurs="0" />
+      <xs:element name="FromDate" type="xs:dateTime" minOccurs="0" />
+      <xs:element name="ToDate" type="xs:dateTime" minOccurs="0" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="AddressLineType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="100"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="AddressSingleLineType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="255"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="BankAccountAddressType">
+    <xs:sequence>
+      <xs:element name="Name" type="BankAccountNameType" minOccurs="1"/>
+      <xs:element name="Address1" type="BankAccountAddressLineType" minOccurs="1" />
+      <xs:element name="Address2" type="BankAccountAddressLineType" minOccurs="0" />
+      <xs:element name="Address3" type="BankAccountAddressLineType" minOccurs="0"/>
+      <xs:element name="Address4" type="BankAccountAddressLineType" minOccurs="0"/>
+      <xs:element name="Address5" type="BankAccountAddressLineType" minOccurs="0"/>
+      <xs:element name="Address6" type="BankAccountAddressLineType" minOccurs="0"/>
+      <xs:element name="Postcode" type="BankAccountAddressPostcodeType" minOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="BankAccountNameType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="36"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="BankAccountAddressLineType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="35"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="BankAccountAddressPostcodeType">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="12"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="ChecksType">
+    <xs:sequence>
+      <xs:element name="Check" type="CheckType" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="CheckType">
+    <xs:sequence>
+      <xs:element name="IndividualId" type="xs:integer" minOccurs="0" maxOccurs="1" />
+      <xs:element name="TypeOfCheckId" type="xs:integer" minOccurs="0" maxOccurs="1" />
+      <xs:element name="CheckStatusId" type="xs:integer" minOccurs="0" maxOccurs="1" />
+      <xs:element name="URN" type="ReferenceNumberType" minOccurs="0" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SuitabilitiesType">
+    <xs:sequence>
+      <xs:element name="Suitability" type="SuitabilityType" minOccurs="0" maxOccurs ="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SuitabilityType">
+    <xs:sequence>
+      <xs:element name="IndividualId" type="xs:integer" minOccurs="0" maxOccurs="1" />
+      <xs:element name="OverallSuitabilityDecisionId" type ="xs:integer" minOccurs="0" maxOccurs="1" />
+      <xs:element name="URN" type="ReferenceNumberType" minOccurs="0" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="RegisterStatusType">
+    <xs:restriction base="xs:int">
+      <xs:enumeration value="0" />
+      <xs:enumeration value="1" />
+      <xs:enumeration value="2" />
+    </xs:restriction>
+  </xs:simpleType>
+
+
+  <xs:complexType name="CarePeriodsType">
+    <xs:sequence>
+      <xs:element name="CarePeriod" type="CarePeriodType" minOccurs="15" maxOccurs="15" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="CarePeriodType">
+    <xs:sequence>
+      <xs:element name="CarePeriodTypeID" type="xs:string" minOccurs="1" maxOccurs="1" />
+      <xs:element name="CarePeriodYesNo" type="YesNoType" minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+
+  <xs:complexType name="VisitsType">
+    <xs:sequence>
+      <xs:element name="Visit" type="VisitType" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+
+  <xs:complexType name="VisitType">
+    <xs:sequence>
+      <xs:element name="InspectionNumber" type="xs:integer" minOccurs="1" maxOccurs="1"  />
+      <xs:element name="VisitDate" type="xs:date" minOccurs="1" maxOccurs="1"  />
+      <xs:element name="VisitTypeId" type="xs:integer" minOccurs="1" maxOccurs="1"  />
+      <xs:element name="VisitStatusId" type="xs:integer" minOccurs="0" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema>

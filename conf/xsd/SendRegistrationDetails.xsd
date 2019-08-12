@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:pdt="http://www.govtalk.gov.uk" version="1.0">
+  <xs:include schemaLocation="Common.xsd" />
+
+  <xs:element name="Registrations">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Registration" type="RegistrationType" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="RegistrationType">
+    <xs:sequence>
+      <xs:element name="URN" type="ReferenceNumberType" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="ConsentToPublishChildminderDetails" type="YesNoType" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="RegistrationExtraTimestamp" type="xs:string" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="SettingId" type="xs:integer" minOccurs="0" maxOccurs="1" />
+      <xs:element name="SettingTelephoneNumber" type="TelephoneNumberType" minOccurs="0" maxOccurs="1" />
+      <xs:element name="SettingTimestamp" type="xs:string" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="Associations" type="AssociationsType" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="BankAccountName" type="BankAccountNameType" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="BankAccountAddress" type="BankAccountAddressType" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="BankAccountNo" type="xs:string" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="SortCode" type="xs:string" minOccurs="0" maxOccurs="1"/>      
+      <xs:element name="CarePeriods" type="CarePeriodsType" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="ReplacementCertificateRequest" type="YesNoType" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="NCOR" type="YesNoType" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="AppWithdrawalRequest" type="YesNoType" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="RegResignationRequest" type="YesNoType" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="VCR" type="RegisterStatusType" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="VCRTimestamp" type="TimestampType" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="CCR" type="RegisterStatusType" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="CCRTimestamp" type="TimestampType" minOccurs="0" maxOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+
+
+</xs:schema>

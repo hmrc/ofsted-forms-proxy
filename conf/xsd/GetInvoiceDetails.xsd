@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:pdt="http://www.govtalk.gov.uk" version="1.0">
+  <xs:include schemaLocation="Common.xsd"/>
+
+  <xs:element name="InvoiceDetails">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="InvoiceDetail" type="InvoiceDetailType" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:complexType name="InvoiceDetailType">
+    <xs:sequence>
+      <xs:element name="URN" type="ReferenceNumberType" minOccurs ="0"/>
+      <xs:element name="InvoiceNumber" type="xs:string" minOccurs ="0"/>
+      <xs:element name="InvoiceStatus" type="xs:string" minOccurs ="0"/>
+      <xs:element name="InvoiceDueDate" type="xs:dateTime" minOccurs ="0"/>
+      <xs:element name="OutstandingInvoiceAmount" type="xs:decimal" minOccurs ="0"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

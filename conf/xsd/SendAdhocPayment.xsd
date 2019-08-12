@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:pdt="http://www.govtalk.gov.uk" version="1.0">
+  <xs:include schemaLocation="Common.xsd"/>
+
+  <xs:element name="Payments">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Payment" type="PaymentType" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="PaymentType">
+    <xs:sequence>
+      <xs:element name="PaymentAction" type="xs:string" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="PaymentReference" type="xs:string" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="PaymentAmount" type="xs:decimal" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="PaymentEventDateTime" type="xs:dateTime" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="URN" type="ReferenceNumberType" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="SettingName" type="SettingNameType" minOccurs="1" maxOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

@@ -16,13 +16,15 @@
 
 package uk.gov.hmrc.ofstedformsproxy.controllers
 
+import cats.instances.int._
+import cats.syntax.eq._
 import java.net.URL
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 import javax.inject.{Inject, Singleton}
 import play.api.i18n._
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.mvc._
 import scalaz.{-\/, \/-}
 import uk.gov.hmrc.http._
@@ -59,7 +61,7 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
                                           val messagesApi: MessagesApi,
                                           auditingService: AuditingService,
                                           appConfig: AppConfig)
-  extends BaseController with I18nSupport with HeaderValidator{
+  extends BaseController with I18nSupport with HeaderValidator {
 
   def submitForm(): Action[AnyContent] = validateAccept(contentTypeValidation).async {
     implicit request =>
@@ -91,6 +93,51 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
           logger.error("Failed to build the GetURN SOAP Payload")
           Future.successful(BadRequest(error))
         }
+      }
+  }
+
+  // Expects a JSON body of the form:
+  // {
+  //   "formId1": "ReferenceNumberType",
+  //   "formId2": "ReferenceNumberType",
+  //   "formId3": "ReferenceNumberType"
+  //   ...
+  // }
+  // Where:
+  //   "formIdn" is any identifier you like to associate with the returned URN for the form (e.g. SubmissionRef, or the FormId itself
+  //  "ReferenceNumberType" is one of the reference number types defined in Common.xsd
+  //
+  // The response body will be of the form:
+  // {
+  //   "formId1": "URN1",
+  //   "formId2": "URN2",
+  //   "formId3": "URN3",
+  //   ...
+  // }
+  // Where "URNn" is the new URN for each formIdn
+  def getUrns(): Action[AnyContent] = Action.async {
+    implicit request =>
+      def reportProblemWithBody(body: String) = {
+        val err = s"getUrns request body is invalid. Should be a JSON object containing fields whose names are some form of form id, and whose values are the ReferenceNumberType you want for the corresponding URN. Got $body"
+        logger.error(err)
+        Future.successful(BadRequest(err))
+      }
+
+      request.body.asJson match {
+        case Some(obj: JsObject) =>
+          val body = obj.fields.map { case (k, v) => (k, v.as[String]) }
+          soapService.buildGetURNsPayload(body.map(_._2)) match {
+            case \/-(getUrnsPayload) => {
+              logger.debug(s"Constructed GetURNs payload: ", url = appConfig.cygnumURL, payload = getUrnsPayload)
+              callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, getUrnsPayload), processGetURNsResponse(body.map(_._1)))
+            }
+            case -\/(error) => {
+              logger.error("Failed to build the GetURNs SOAP Payload")
+              Future.successful(BadRequest(error))
+            }
+          }
+        case Some(v) => reportProblemWithBody(v.toString)
+        case None => reportProblemWithBody("an empty body")
       }
   }
 
@@ -162,6 +209,25 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
     else {
       logger.error(s"Get Data service response: ${xmlResponse.toString}")
       BadRequest("Failed to get URN")
+    }
+  }
+
+  private def processGetURNsResponse(keys: Seq[String])(response: HttpResponse)(implicit hc: HeaderCarrier): Result = {
+    val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
+    val tmp: String = (xmlResponse \\ "GetDataResult").text
+
+    val urns = for {
+      urnsNode <- (scala.xml.XML.loadString(tmp) \\ "URNs")
+      urnNode <- urnsNode \\ "URN"
+    } yield urnNode.text
+
+    if (urns.size === keys.size) {
+      logger.debug(s"Get Data service full response: ${xmlResponse.toString}: ", Seq.empty)
+      Ok(JsObject(keys.zip(urns.map(JsString))))
+    }
+    else {
+      logger.error(s"Get Data service response: ${xmlResponse.toString}")
+      BadRequest("Failed to get URNs")
     }
   }
 

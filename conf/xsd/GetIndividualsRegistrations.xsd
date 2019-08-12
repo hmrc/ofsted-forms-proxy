@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:pdt="http://www.govtalk.gov.uk" version="1.0">
+  <xs:include schemaLocation="Common.xsd"/>
+  <xs:element name="Registrations">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="IndividualID" type= "xs:integer"/>
+        <xs:element name="Registration" type="RegistrationType" minOccurs="0" maxOccurs="unbounded" />     
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="RegistrationType">
+    <xs:sequence>
+      <xs:element name="URN" type= "ReferenceNumberType" />
+      <xs:element name="SettingName" type= "SettingNameType" />
+      <xs:element name="SettingAddress" type= "AddressSingleLineType" />
+      <xs:element name="RegistrationDate" type= "xs:date" minOccurs="0" />
+      <xs:element name="RegistrationStatus" type= "RegistrationStatusDescType" />
+      <xs:element name="ProvisionType" type= "ProvisionTypeDescType" />
+      <xs:element name="ProvisionTypeID" type= "ProvisionTypeIDType" />
+      <xs:element name="AssociationTypeID" type= "AssociationTypeIDType" />
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>
