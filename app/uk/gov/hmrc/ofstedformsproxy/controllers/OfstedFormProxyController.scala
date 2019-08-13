@@ -30,7 +30,6 @@ import javax.inject.{Inject, Singleton}
 import play.api.i18n._
 import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.mvc._
-import scalaz.{-\/, \/-}
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.ofstedformsproxy.config.AppConfig
 import uk.gov.hmrc.ofstedformsproxy.connectors.OutboundServiceConnector
@@ -72,14 +71,11 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       request.body.asXml match {
         case Some(p) => {
           soapService.buildFormSubmissionPayload(p) match {
-            case \/-(formPayload) => {
+            case Right(formPayload) => {
               logger.debug(s"Constructed Send Data payload: ", url = appConfig.cygnumURL, payload = p.toString)
               callOutboundServiceAndHandleResult(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, formPayload), processFormSubmissionResponse)
             }
-            case -\/(error) => {
-              logger.error("Failed to build the form submission SOAP XML payload")
-              Future.successful(BadRequest(error))
-            }
+            case Left(t) => handleException("Failed to build the form submission SOAP XML payload", t)
           }
         }
         case None => Future.successful(BadRequest("Failed to parse XML payload"))
@@ -89,14 +85,11 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
   def getUrn(): Action[AnyContent] = Action.async {
     implicit request =>
       soapService.buildGetURNPayload() match {
-        case \/-(getUrnPayload) => {
+        case Right(getUrnPayload) => {
           logger.debug(s"Constructed GetURN payload: ", url = appConfig.cygnumURL, payload = getUrnPayload)
           callOutboundServiceAndHandleResult(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, getUrnPayload), processGetURNResponse)
         }
-        case -\/(error) => {
-          logger.error("Failed to build the GetURN SOAP Payload")
-          Future.successful(BadRequest(error))
-        }
+        case Left(t) => handleException("Failed to build the GetURN SOAP Payload", t)
       }
   }
 
@@ -129,13 +122,11 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
 
       def getUrn(formId: String, referenceNumberType: String): Future[Either[Result, (String, String)]] =
         soapService.buildGetURNsPayload(referenceNumberType) match {
-          case \/-(payload) =>
+          case Right(payload) =>
             logger.debug(s"Constructed GetURNs payload: ", url = appConfig.cygnumURL, payload = payload)
             callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetURNsResponse)
               .map(maybeUrn => maybeUrn.map(urn => (formId, urn)))
-          case -\/(error) =>
-            logger.error("Failed to build the GetURNs SOAP Payload")
-            Future(Left(BadRequest(error)))
+          case Left(t) => handleException("Failed to build the GetURNs SOAP Payload", t).map(Left(_))
         }
 
       def unpackBody(obj: JsObject) =
@@ -173,56 +164,44 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
   def getIndividualDetails(individualId: String): Action[AnyContent] = Action.async {
     implicit request =>
       soapService.buildGetIndividualDetailsPayload(individualId) match {
-        case \/-(payload) => {
+        case Right(payload) => {
           logger.debug(s"Constructed GetIndividualDetails payload: ", appConfig.cygnumURL, payload)
           callOutboundServiceAndHandleResult(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetDataResponse)
         }
-        case -\/(error) => {
-          logger.error("Failed to build the GetIndividualDetails SOAP Payload")
-          Future.successful(BadRequest(error))
-        }
+        case Left(t) => handleException("Failed to build the GetIndividualDetails SOAP Payload", t)
       }
   }
 
   def getRegistrationDetails(urn: String): Action[AnyContent] = Action.async {
     implicit request =>
       soapService.buildGetRegistrationDetailsPayload(urn) match {
-        case \/-(payload) => {
+        case Right(payload) => {
           logger.debug(s"Constructed GetRegistrationDetails payload: ", appConfig.cygnumURL, payload)
           callOutboundServiceAndHandleResult(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetDataResponse)
         }
-        case -\/(error) => {
-          logger.error("Failed to build the GetRegistrationDetails SOAP Payload")
-          Future.successful(BadRequest(error))
-        }
+        case Left(t) => handleException("Failed to build the GetRegistrationDetails SOAP Payload", t)
       }
   }
 
   def getOrganisationDetails(organisationId: String): Action[AnyContent] = Action.async {
     implicit request =>
       soapService.buildGetOrganisationDetailsPayload(organisationId) match {
-        case \/-(payload) => {
+        case Right(payload) => {
           logger.debug(s"Constructed GetOrganisationDetails payload: ", appConfig.cygnumURL, payload)
           callOutboundServiceAndHandleResult(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetDataResponse)
         }
-        case -\/(error) => {
-          logger.error("Failed to build the GetOrganisationDetails SOAP Payload")
-          Future.successful(BadRequest(error))
-        }
+        case Left(t) => handleException("Failed to build the GetOrganisationDetails SOAP Payload", t)
       }
   }
 
   def getELSProviderDetails(providerId: String): Action[AnyContent] = Action.async {
     implicit request =>
       soapService.buildGetELSProviderDetailsPayload(providerId) match {
-        case \/-(payload) => {
+        case Right(payload) => {
           logger.debug(s"Constructed GetELSProvideDetails payload: ", appConfig.cygnumURL, payload)
           callOutboundServiceAndHandleResult(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetDataResponse)
         }
-        case -\/(error) => {
-          logger.error("Failed to build the GetELSProvideDetails SOAP Payload")
-          Future.successful(BadRequest(error))
-        }
+        case Left(t) => handleException("Failed to build the GetELSProvideDetails SOAP Payload", t)
       }
   }
 
@@ -318,6 +297,10 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
     CustomErrorResponses.badGatewayErrorResponses.JsonResult
   }
 
+  private def handleException(error: String, t: Throwable)(implicit hc: HeaderCarrier) = {
+    logger.error(error, t)
+    Future.successful(BadRequest(error))
+  }
   override val notificationLogger: OfstedFormProxyLogger = logger
 
 }

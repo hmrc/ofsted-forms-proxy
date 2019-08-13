@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.ofstedformsproxy.service
 
+import cats.syntax.either._
+
 import java.io._
 import java.nio.charset.StandardCharsets
 import java.security._
@@ -32,33 +34,30 @@ import javax.xml.crypto.dsig._
 import javax.xml.crypto.dsig.dom.DOMSignContext
 import javax.xml.crypto.dsig.keyinfo.KeyInfoFactory
 import javax.xml.crypto.dsig.spec.{C14NMethodParameterSpec, TransformParameterSpec}
-import javax.xml.parsers.ParserConfigurationException
 import javax.xml.soap._
-import org.w3c.dom.{DOMException, Document}
-import org.xml.sax.{InputSource, SAXException}
+import org.w3c.dom.Document
+import org.xml.sax.InputSource
 import play.api.Environment
-import scalaz._
 import uk.gov.hmrc.ofstedformsproxy.config.AppConfig
 import uk.gov.hmrc.ofstedformsproxy.models.ServiceType._
 
-import scala.util.{Failure, Success, Try}
 import scala.xml.{NodeSeq, XML}
 
 @ImplementedBy(classOf[SOAPMessageServiceImpl])
 trait SOAPMessageService {
-  def buildGetURNPayload(): String \/ String
+  def buildGetURNPayload(): Throwable Either String
 
-  def buildGetURNsPayload(referenceNumberType: String): String \/ String
+  def buildGetURNsPayload(referenceNumberType: String): Throwable Either String
 
-  def buildFormSubmissionPayload(node: NodeSeq): String \/ String
+  def buildFormSubmissionPayload(node: NodeSeq): Throwable Either String
 
-  def buildGetIndividualDetailsPayload(individualId: String): String \/ String
+  def buildGetIndividualDetailsPayload(individualId: String): Throwable Either String
 
-  def buildGetRegistrationDetailsPayload(urn: String): String \/ String
+  def buildGetRegistrationDetailsPayload(urn: String): Throwable Either String
 
-  def buildGetOrganisationDetailsPayload(organisationId: String): String \/ String
+  def buildGetOrganisationDetailsPayload(organisationId: String): Throwable Either String
 
-  def buildGetELSProviderDetailsPayload(providerId: String): String \/ String
+  def buildGetELSProviderDetailsPayload(providerId: String): Throwable Either String
 }
 
 @Singleton
@@ -71,8 +70,8 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
   System.setProperty("javax.xml.soap.MessageFactory", "com.sun.xml.internal.messaging.saaj.soap.ver1_2.SOAPMessageFactory1_2Impl")
   System.setProperty("javax.xml.bind.JAXBContext", "com.sun.xml.internal.bind.v2.ContextFactory")
 
-  override def buildFormSubmissionPayload(node: NodeSeq): String \/ String = {
-    val result: String \/ String = for {
+  override def buildFormSubmissionPayload(node: NodeSeq): Throwable Either String = {
+    for {
       xmlDocument <- readInXMLPayload(
         <SendData xmlns="http://tempuri.org/">
           <Service>SendApplicationForms</Service>
@@ -83,14 +82,9 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
       soapMessage <- createSOAPEnvelope(xmlDocument)
       signedSoapMessage <- signSOAPMessage(soapMessage, SendData)
     } yield stringifySoapMessage(signedSoapMessage)
-
-    result match {
-      case \/-(xmlPayload) => \/-(xmlPayload)
-      case -\/(error) => -\/(error)
-    }
   }
 
-  override def buildGetIndividualDetailsPayload(individualId: String): String \/ String =
+  override def buildGetIndividualDetailsPayload(individualId: String): Throwable Either String =
     buildGetDataPayload(individualId,
       <Service>GetIndividualDetails</Service>,
       <Individuals>
@@ -100,7 +94,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
       </Individuals>
     )
 
-  override def buildGetRegistrationDetailsPayload(urn: String): String \/ String =
+  override def buildGetRegistrationDetailsPayload(urn: String): Throwable Either String =
     buildGetDataPayload(urn,
       <Service>GetRegistrationDetails</Service>,
       <Registrations>
@@ -108,7 +102,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
       </Registrations>
     )
 
-  override def buildGetOrganisationDetailsPayload(organisationId: String): String \/ String =
+  override def buildGetOrganisationDetailsPayload(organisationId: String): Throwable Either String =
     buildGetDataPayload(organisationId,
       <Service>GetOrganisationDetails</Service>,
       <Organisations>
@@ -116,7 +110,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
       </Organisations>
     )
 
-  override def buildGetELSProviderDetailsPayload(providerId: String): String \/ String =
+  override def buildGetELSProviderDetailsPayload(providerId: String): Throwable Either String =
     buildGetDataPayload(providerId,
       <Service>GetELSProviderDetails</Service>,
       <Providers>
@@ -125,7 +119,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     )
 
 
-  private def buildGetDataPayload(id: String, serviceName: NodeSeq, nestedElm: NodeSeq): String \/ String = for {
+  private def buildGetDataPayload(id: String, serviceName: NodeSeq, nestedElm: NodeSeq): Throwable Either String = for {
       xmlDocument <- readInXMLPayload(
         <GetData xmlns="http://tempuri.org/">
           {serviceName}
@@ -142,21 +136,15 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
       .replaceAll("\n", "")
       .replaceAll("\r", "")
 
-  override def buildGetURNPayload(): String \/ String = {
-    val result: String \/ String = for {
+  override def buildGetURNPayload(): Throwable Either String = {
+    for {
       xmlDocument <- readInXMLFilePayload(appConfig.getUrnXMLFileLocation)
       soapMessage <- createSOAPEnvelope(xmlDocument)
       signedSoapMessage <- signSOAPMessage(soapMessage, GetData)
     } yield stringifySoapMessage(signedSoapMessage)
-
-    result match {
-      case \/-(xmlPayload) => \/-(xmlPayload)
-      case -\/(error) => -\/(error)
-    }
-
   }
 
-  override def buildGetURNsPayload(referenceNumberType: String): String \/ String =
+  override def buildGetURNsPayload(referenceNumberType: String): Throwable Either String =
     buildGetDataPayload(
       "",
       <Service>GetNewURN</Service>,
@@ -174,40 +162,23 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     writer.toString
   }
 
-  private def readInXMLPayload(path: NodeSeq): String \/ org.w3c.dom.Document = {
-    Try {
+  private def readInXMLPayload(payload: NodeSeq): Throwable Either org.w3c.dom.Document = Either.catchNonFatal {
       val dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance
       dbFactory.setNamespaceAware(true)
-      dbFactory.newDocumentBuilder.parse(new InputSource(new StringReader(path.toString())))
+      dbFactory.newDocumentBuilder.parse(new InputSource(new StringReader(payload.toString())))
     }
-    match {
-      case Success(document) => \/-(document)
-      case Failure(e) => throw e
-    }
-  }
 
-  private def readInXMLFilePayload(path: String): String \/ org.w3c.dom.Document = {
+  private def readInXMLFilePayload(path: String): Throwable Either org.w3c.dom.Document =
     env.getExistingFile(path) match {
-      case Some(xml) => Try {
+      case Some(xml) => Either.catchNonFatal {
         val dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance
         dbFactory.setNamespaceAware(true)
         dbFactory.newDocumentBuilder.parse(xml)
       }
-      match {
-        case Success(document) => \/-(document)
-        case Failure(e: ParserConfigurationException) => -\/(e.getMessage)
-        case Failure(e: SAXException) => -\/(e.getMessage)
-        case Failure(e: IOException) => -\/(e.getMessage)
-        case Failure(e) => throw e
-      }
-      case None => {
-        -\/("XML payload file does not exist.")
-      }
+      case None => Left(new Exception("XML payload file does not exist."))
     }
-  }
 
-  private def createSOAPEnvelope(xmlDocument: Document): String \/ SOAPMessage =
-    Try {
+  private def createSOAPEnvelope(xmlDocument: Document): Throwable Either SOAPMessage = Either.catchNonFatal {
       // Create SOAP Message
       val messageFactory = MessageFactory.newInstance
       val soapMessage = messageFactory.createMessage
@@ -224,17 +195,9 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
       soapBody.addDocument(xmlDocument)
       soapBody.addAttribute(soapEnvelope.createName("Id", "u", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"), "_1")
       soapMessage
-
-    } match {
-      case Success(soapMessage) => \/-(soapMessage)
-      case Failure(e: SOAPException) => -\/(e.getMessage)
-      case Failure(e: DOMException) => -\/(e.getMessage)
-      case Failure(e) => throw e
     }
 
-  private def signSOAPMessage(soapMessage: SOAPMessage, action: ServiceType): String \/ SOAPMessage = {
-
-    Try {
+  private def signSOAPMessage(soapMessage: SOAPMessage, action: ServiceType): Throwable Either SOAPMessage = Either.catchNonFatal {
       val soapHeader: SOAPHeader = soapMessage.getSOAPHeader
       soapHeader.setPrefix("s")
 
@@ -259,11 +222,6 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
       addSignature(securityElement, soapMessage.getSOAPBody, timestamp)
 
       soapMessage
-    } match {
-      case Success(signedSoapMessage) => \/-(signedSoapMessage)
-      case Failure(e) => throw e
-    }
-
   }
 
   def createTempFileForData(data: String): (String, Array[Byte]) = {
