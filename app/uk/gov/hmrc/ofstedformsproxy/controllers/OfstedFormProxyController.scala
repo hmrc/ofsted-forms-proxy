@@ -16,8 +16,12 @@
 
 package uk.gov.hmrc.ofstedformsproxy.controllers
 
-import cats.instances.int._
-import cats.syntax.eq._
+import cats.instances.future._
+import cats.instances.list._
+import cats.syntax.either._
+import cats.syntax.foldable._
+import cats.syntax.traverse._
+
 import java.net.URL
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -70,7 +74,7 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
           soapService.buildFormSubmissionPayload(p) match {
             case \/-(formPayload) => {
               logger.debug(s"Constructed Send Data payload: ", url = appConfig.cygnumURL, payload = p.toString)
-              callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, formPayload), processFormSubmissionResponse)
+              callOutboundServiceAndHandleResult(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, formPayload), processFormSubmissionResponse)
             }
             case -\/(error) => {
               logger.error("Failed to build the form submission SOAP XML payload")
@@ -87,7 +91,7 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       soapService.buildGetURNPayload() match {
         case \/-(getUrnPayload) => {
           logger.debug(s"Constructed GetURN payload: ", url = appConfig.cygnumURL, payload = getUrnPayload)
-          callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, getUrnPayload), processGetURNResponse)
+          callOutboundServiceAndHandleResult(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, getUrnPayload), processGetURNResponse)
         }
         case -\/(error) => {
           logger.error("Failed to build the GetURN SOAP Payload")
@@ -123,19 +127,44 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
         Future.successful(BadRequest(err))
       }
 
+      def getUrn(formId: String, referenceNumberType: String): Future[Either[Result, (String, String)]] =
+        soapService.buildGetURNsPayload(referenceNumberType) match {
+          case \/-(payload) =>
+            logger.debug(s"Constructed GetURNs payload: ", url = appConfig.cygnumURL, payload = payload)
+            callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetURNsResponse)
+              .map(maybeUrn => maybeUrn.map(urn => (formId, urn)))
+          case -\/(error) =>
+            logger.error("Failed to build the GetURNs SOAP Payload")
+            Future(Left(BadRequest(error)))
+        }
+
+      def unpackBody(obj: JsObject) =
+        obj.fields
+          .map { case (formId, referenceNumberType) => (formId, referenceNumberType.as[String]) }
+          .toList
+
+      implicit val e = cats.instances.either.catsDataMonoidForEither[Result, List[(String, String)]]
+
+      def getIndividualURNs(formIdsAndReferenceNumberTypes: List[(String, String)]) =
+        formIdsAndReferenceNumberTypes.traverse { case (formId, referenceNumberType) => getUrn(formId, referenceNumberType) }
+
+      def reduceErrors(l: List[Either[Result, (String, String)]]) =
+        l.foldMap(_.map(List(_)))
+
+      def createResponseJson(l: Seq[(String, String)]) = JsObject(l.map { case (k, v) => (k, JsString(v)) })
+
+      def assembleResponseFromIndividualURNs(individualURNs: List[Either[Result, (String, String)]]) =
+        reduceErrors(individualURNs)
+          .map(createResponseJson)
+          .map(Ok(_))
+          .merge
+
+
       request.body.asJson match {
         case Some(obj: JsObject) =>
-          val body = obj.fields.map { case (k, v) => (k, v.as[String]) }
-          soapService.buildGetURNsPayload(body.map(_._2)) match {
-            case \/-(getUrnsPayload) => {
-              logger.debug(s"Constructed GetURNs payload: ", url = appConfig.cygnumURL, payload = getUrnsPayload)
-              callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, getUrnsPayload), processGetURNsResponse(body.map(_._1)))
-            }
-            case -\/(error) => {
-              logger.error("Failed to build the GetURNs SOAP Payload")
-              Future.successful(BadRequest(error))
-            }
-          }
+          getIndividualURNs(unpackBody(obj))
+            .map(assembleResponseFromIndividualURNs)
+
         case Some(v) => reportProblemWithBody(v.toString)
         case None => reportProblemWithBody("an empty body")
       }
@@ -146,7 +175,7 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       soapService.buildGetIndividualDetailsPayload(individualId) match {
         case \/-(payload) => {
           logger.debug(s"Constructed GetIndividualDetails payload: ", appConfig.cygnumURL, payload)
-          callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetDataResponse)
+          callOutboundServiceAndHandleResult(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetDataResponse)
         }
         case -\/(error) => {
           logger.error("Failed to build the GetIndividualDetails SOAP Payload")
@@ -160,7 +189,7 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       soapService.buildGetRegistrationDetailsPayload(urn) match {
         case \/-(payload) => {
           logger.debug(s"Constructed GetRegistrationDetails payload: ", appConfig.cygnumURL, payload)
-          callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetDataResponse)
+          callOutboundServiceAndHandleResult(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetDataResponse)
         }
         case -\/(error) => {
           logger.error("Failed to build the GetRegistrationDetails SOAP Payload")
@@ -174,7 +203,7 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       soapService.buildGetOrganisationDetailsPayload(organisationId) match {
         case \/-(payload) => {
           logger.debug(s"Constructed GetOrganisationDetails payload: ", appConfig.cygnumURL, payload)
-          callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetDataResponse)
+          callOutboundServiceAndHandleResult(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetDataResponse)
         }
         case -\/(error) => {
           logger.error("Failed to build the GetOrganisationDetails SOAP Payload")
@@ -188,7 +217,7 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       soapService.buildGetELSProviderDetailsPayload(providerId) match {
         case \/-(payload) => {
           logger.debug(s"Constructed GetELSProvideDetails payload: ", appConfig.cygnumURL, payload)
-          callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetDataResponse)
+          callOutboundServiceAndHandleResult(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetDataResponse)
         }
         case -\/(error) => {
           logger.error("Failed to build the GetELSProvideDetails SOAP Payload")
@@ -212,22 +241,18 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
     }
   }
 
-  private def processGetURNsResponse(keys: Seq[String])(response: HttpResponse)(implicit hc: HeaderCarrier): Result = {
+  private def processGetURNsResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Either[Result, String] = {
     val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
     val tmp: String = (xmlResponse \\ "GetDataResult").text
+    val urn: String = (scala.xml.XML.loadString(tmp) \\ "URN").text
 
-    val urns = for {
-      urnsNode <- (scala.xml.XML.loadString(tmp) \\ "URNs")
-      urnNode <- urnsNode \\ "URN"
-    } yield urnNode.text
-
-    if (urns.size === keys.size) {
+    if (!urn.isEmpty) {
       logger.debug(s"Get Data service full response: ${xmlResponse.toString}: ", Seq.empty)
-      Ok(JsObject(keys.zip(urns.map(JsString))))
+      Right(urn)
     }
     else {
       logger.error(s"Get Data service response: ${xmlResponse.toString}")
-      BadRequest("Failed to get URNs")
+      Left(BadRequest("Failed to get URNs"))
     }
   }
 
@@ -247,7 +272,7 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
         BadRequest(res.dataResults)
     }
 
-  private def callOutboundService(outboundCallRequest: OutboundCallRequest, responseHandler: HttpResponse => Result)(implicit hc: HeaderCarrier): Future[Result] = {
+  private def callOutboundService[T](outboundCallRequest: OutboundCallRequest, responseHandler: HttpResponse => Either[Result, T])(implicit hc: HeaderCarrier): Future[Either[Result, T]] = {
     val startTime = LocalDateTime.now
     outboundServiceConnector.callOutboundService(outboundCallRequest)
       .map { response =>
@@ -259,21 +284,26 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       case upstream4xx: Upstream4xxResponse =>
         logCallDuration(startTime)
         val logMsg = s"Outbound call failed with Upstream4xxResponse status=${upstream4xx.upstreamResponseCode}"
-        recovery(outboundCallRequest, logMsg, s"http status ${upstream4xx.upstreamResponseCode.toString}", upstream4xx)
+        Left(recovery(outboundCallRequest, logMsg, s"http status ${upstream4xx.upstreamResponseCode.toString}", upstream4xx))
       case upstream5xx: Upstream5xxResponse =>
         logCallDuration(startTime)
         val logMsg = s"Outbound call failed with Upstream5xxRespons" +
           s"e status=${upstream5xx.upstreamResponseCode}"
-        recovery(outboundCallRequest, logMsg, s"http status ${upstream5xx.upstreamResponseCode.toString}", upstream5xx)
+        Left(recovery(outboundCallRequest, logMsg, s"http status ${upstream5xx.upstreamResponseCode.toString}", upstream5xx))
       case httpException: HttpException =>
         logCallDuration(startTime)
         val logMsg = s"Outbound call failed with response status=${httpException.responseCode}"
-        recovery(outboundCallRequest, logMsg, s"http status ${httpException.responseCode.toString}", httpException)
+        Left(recovery(outboundCallRequest, logMsg, s"http status ${httpException.responseCode.toString}", httpException))
       case NonFatal(thr) =>
         logCallDuration(startTime)
         val logMsg = s"Outbound call failed due to ${thr.getMessage}"
-        recovery(outboundCallRequest, logMsg, "http status unknown", thr)
+        Left(recovery(outboundCallRequest, logMsg, "http status unknown", thr))
     }
+  }
+
+  private def callOutboundServiceAndHandleResult(outboundCallRequest: OutboundCallRequest, responseHandler: HttpResponse => Result)(implicit hc: HeaderCarrier): Future[Result] = {
+    callOutboundService(outboundCallRequest, (response: HttpResponse) => Right(responseHandler(response)))
+      .map(_.merge)
   }
 
   protected def logCallDuration(startTime: LocalDateTime)(implicit hc: HeaderCarrier): Unit = {

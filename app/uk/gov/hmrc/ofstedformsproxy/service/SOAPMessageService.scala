@@ -19,7 +19,7 @@ package uk.gov.hmrc.ofstedformsproxy.service
 import java.io._
 import java.nio.charset.StandardCharsets
 import java.security._
-import java.security.cert.{Certificate, CertificateEncodingException}
+import java.security.cert.Certificate
 import java.time.format.DateTimeFormatter
 import java.time.{ZoneId, ZonedDateTime}
 import java.util
@@ -48,7 +48,7 @@ import scala.xml.{NodeSeq, XML}
 trait SOAPMessageService {
   def buildGetURNPayload(): String \/ String
 
-  def buildGetURNsPayload(referenceNumberTypes: Seq[String]): String \/ String
+  def buildGetURNsPayload(referenceNumberType: String): String \/ String
 
   def buildFormSubmissionPayload(node: NodeSeq): String \/ String
 
@@ -156,13 +156,11 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
 
   }
 
-  override def buildGetURNsPayload(referenceNumberTypes: Seq[String]): String \/ String =
+  override def buildGetURNsPayload(referenceNumberType: String): String \/ String =
     buildGetDataPayload(
       "",
       <Service>GetNewURN</Service>,
-      <URNs>{
-        referenceNumberTypes.map { rn => <URN>{rn}</URN> }
-      }</URNs>
+      <URNs><URN>{referenceNumberType}</URN></URNs>
     )
 
   private def stringifySoapMessage(soapMessage: SOAPMessage): String = {
