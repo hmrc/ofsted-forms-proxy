@@ -155,6 +155,10 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
         case Some(obj: JsObject) =>
           getIndividualURNs(unpackBody(obj))
             .map(assembleResponseFromIndividualURNs)
+            .map { result =>
+              logger.debug(s"GetURNs response: ", appConfig.cygnumURL, result.toString)
+              result
+            }
 
         case Some(v) => reportProblemWithBody(v.toString)
         case None => reportProblemWithBody("an empty body")
