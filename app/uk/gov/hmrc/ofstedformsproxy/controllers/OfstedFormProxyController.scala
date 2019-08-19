@@ -209,6 +209,12 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       }
   }
 
+  def logBody(): Action[AnyContent] = Action.async {
+    implicit request =>
+      logger.info(request.body.asText.getOrElse("No body provided"))
+      Future(Ok)
+  }
+
   private def processGetURNResponse(response: HttpResponse)(implicit hc: HeaderCarrier): Result = {
     val xmlResponse: Elem = scala.xml.XML.loadString(response.body)
     val tmp: String = (xmlResponse \\ "GetDataResult").text

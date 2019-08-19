@@ -10,3 +10,5 @@ GET     /getELSProviderDetails/:providerId      uk.gov.hmrc.ofstedformsproxy.con
 POST    /form                                   uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.submitForm()
 
 POST    /notifier                               uk.gov.hmrc.ofstedformsproxy.controllers.NotifierController.sendNotification()
+
+POST    /logBody                                uk.gov.hmrc.ofstedformsproxy.controllers.OfstedFormProxyController.logBody()
