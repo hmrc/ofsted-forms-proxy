@@ -51,6 +51,8 @@ trait SOAPMessageService {
 
   def buildFormSubmissionPayload(node: NodeSeq): Throwable Either String
 
+  def buildFormBundleSubmissionPayload(node: NodeSeq): Throwable Either String
+
   def buildGetIndividualDetailsPayload(individualId: String): Throwable Either String
 
   def buildGetRegistrationDetailsPayload(urn: String): Throwable Either String
@@ -70,7 +72,7 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
   System.setProperty("javax.xml.soap.MessageFactory", "com.sun.xml.internal.messaging.saaj.soap.ver1_2.SOAPMessageFactory1_2Impl")
   System.setProperty("javax.xml.bind.JAXBContext", "com.sun.xml.internal.bind.v2.ContextFactory")
 
-  override def buildFormSubmissionPayload(node: NodeSeq): Throwable Either String = {
+  override def buildFormSubmissionPayload(node: NodeSeq): Throwable Either String =
     for {
       xmlDocument <- readInXMLPayload(
         <SendData xmlns="http://tempuri.org/">
@@ -82,7 +84,9 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
       soapMessage <- createSOAPEnvelope(xmlDocument)
       signedSoapMessage <- signSOAPMessage(soapMessage, SendData)
     } yield stringifySoapMessage(signedSoapMessage)
-  }
+
+  override def buildFormBundleSubmissionPayload(node: NodeSeq): Throwable Either String =
+    buildFormSubmissionPayload(FormBundlePayloadPreprocessor(node))
 
   override def buildGetIndividualDetailsPayload(individualId: String): Throwable Either String =
     buildGetDataPayload(individualId,

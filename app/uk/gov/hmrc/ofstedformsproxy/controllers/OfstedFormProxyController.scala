@@ -82,6 +82,22 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       }
   }
 
+  def submitFormBundle(): Action[AnyContent] = validateAccept(contentTypeValidation).async {
+    implicit request =>
+      request.body.asXml match {
+        case Some(p) => {
+          soapService.buildFormSubmissionPayload(p) match {
+            case Right(formPayload) => {
+              logger.debug(s"Constructed Send Data payload: ", url = appConfig.cygnumURL, payload = p.toString)
+              callOutboundServiceAndHandleResult(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, formPayload), processFormSubmissionResponse)
+            }
+            case Left(t) => handleException("Failed to build the form submission SOAP XML payload", t)
+          }
+        }
+        case None => Future.successful(BadRequest("Failed to parse XML payload"))
+      }
+  }
+
   def getUrn(): Action[AnyContent] = Action.async {
     implicit request =>
       soapService.buildGetURNPayload() match {
