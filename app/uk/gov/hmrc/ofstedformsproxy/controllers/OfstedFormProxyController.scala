@@ -227,7 +227,11 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
 
   def logBody(): Action[AnyContent] = Action.async {
     implicit request =>
-      logger.info(request.body.asText.getOrElse("No body provided"))
+      logger.info(
+        request.body.asText
+          orElse request.body.asJson.map(_.toString)
+          orElse request.body.asXml.map(_.toString)
+          getOrElse("No body provided or body is not one of text, JSON or XML"))
       Future(Ok)
   }
 
