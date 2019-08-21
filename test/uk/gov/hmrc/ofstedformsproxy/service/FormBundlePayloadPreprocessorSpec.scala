@@ -32,8 +32,15 @@ class FormBundlePayloadPreprocessorSpec extends WordSpec with MustMatchers {
 
   "Unnests ApplicationForms and inserts the correct FormID and ParentFormID" in {
     validate(
-      <ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID></ApplicationForm><ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID></ApplicationForm><ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID></ApplicationForm></ApplicationForms></ApplicationForms></ApplicationForms>,
-      <ApplicationForms><ApplicationForm><FormID>1</FormID><ParentID>1</ParentID></ApplicationForm><ApplicationForm><FormID>2</FormID><ParentID>0</ParentID></ApplicationForm><ApplicationForm><FormID>3</FormID><ParentID>0</ParentID></ApplicationForm></ApplicationForms>
+      <ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>1</Foo></ApplicationForm><ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>2</Foo></ApplicationForm><ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>3</Foo></ApplicationForm></ApplicationForms></ApplicationForms></ApplicationForms>,
+      <ApplicationForms><ApplicationForm><FormID>1</FormID><ParentID>1</ParentID><Foo>1</Foo></ApplicationForm><ApplicationForm><FormID>2</FormID><ParentID>0</ParentID><Foo>2</Foo></ApplicationForm><ApplicationForm><FormID>3</FormID><ParentID>0</ParentID><Foo>3</Foo></ApplicationForm></ApplicationForms>
+    )
+  }
+
+  "Removes duplicates ApplicationForm elements" in {
+    validate(
+      <ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>1</Foo></ApplicationForm><ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>1</Foo></ApplicationForm><ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>2</Foo></ApplicationForm></ApplicationForms></ApplicationForms></ApplicationForms>,
+      <ApplicationForms><ApplicationForm><FormID>1</FormID><ParentID>1</ParentID><Foo>1</Foo></ApplicationForm><ApplicationForm><FormID>2</FormID><ParentID>0</ParentID><Foo>2</Foo></ApplicationForm></ApplicationForms>
     )
   }
 

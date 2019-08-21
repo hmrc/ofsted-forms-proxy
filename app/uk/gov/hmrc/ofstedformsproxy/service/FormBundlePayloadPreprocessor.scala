@@ -23,20 +23,28 @@ import scala.xml.{Elem, Node, NodeSeq}
 
 object FormBundlePayloadPreprocessor {
   def apply(applicationForms: NodeSeq): Node = {
-    val applicationFormElements: NodeSeq = applicationForms \\ "ApplicationForm"
-    val withoutNesting = applicationFormElements.zipWithIndex.collect {
-      case(form: Elem, index) => mungeForm(form, index)
-      case (n, _) => n
-    }
-    <ApplicationForms>{withoutNesting}</ApplicationForms>
+    val cleanedApplicationFormElements = (
+      cleanIndividualApplicationForms _
+        andThen removeDuplicateApplicationForms _
+      andThen addIdElements _)((applicationForms \\ "ApplicationForm").collect { case e: Elem => e })
+    <ApplicationForms>{cleanedApplicationFormElements}</ApplicationForms>
   }
 
-  private def mungeForm(form: Elem, index: Int) =
-    (removeChildElement("ApplicationForms") _
-      andThen removeChildElement("ParentID") _
-      andThen removeChildElement("FormID") _
-      andThen addChildElement(<ParentID>{if (index === 0) 1 else 0}</ParentID>) _
-      andThen addChildElement(<FormID>{index + 1}</FormID>) _) (form)
+  private def addIdElements(applicationForms: Seq[Elem]): Seq[Elem] =
+    applicationForms.zipWithIndex.map { case (e, index) =>
+      (addChildElement(<ParentID>{if (index === 0) 1 else 0}</ParentID>) _
+      andThen addChildElement(<FormID>{index + 1}</FormID>) _)(e)
+    }
+
+  private def removeDuplicateApplicationForms(applicationForms: Seq[Elem]): Seq[Elem] =
+    applicationForms.distinct
+
+  private def cleanIndividualApplicationForms(applicationForms: Seq[Elem]): Seq[Elem] =
+    applicationForms map {
+      (removeChildElement("ApplicationForms") _
+        andThen removeChildElement("ParentID") _
+        andThen removeChildElement("FormID") _)
+    }
 
   private def addChildElement(elem: Elem)(form: Elem) =
     form.copy(child = elem :: form.child.toList)
