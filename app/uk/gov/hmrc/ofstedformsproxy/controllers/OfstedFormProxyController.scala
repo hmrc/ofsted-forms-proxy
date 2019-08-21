@@ -227,7 +227,7 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
           getOrElse("No body provided or body is not one of text, JSON or XML")))
 
       request.body.asXml.foreach { body =>
-        logger.info("Processed payload: " + new PrettyPrinter(1000, 2).format(FormBundlePayloadPreprocessor(body)))
+        logger.info("Processed payload: " + FormBundlePayloadPreprocessor(body))
       }
 
       Future(Ok)
