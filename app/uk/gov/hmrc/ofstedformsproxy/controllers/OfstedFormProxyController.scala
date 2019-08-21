@@ -21,7 +21,6 @@ import cats.instances.list._
 import cats.syntax.either._
 import cats.syntax.foldable._
 import cats.syntax.traverse._
-
 import java.net.URL
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -36,13 +35,13 @@ import uk.gov.hmrc.ofstedformsproxy.connectors.OutboundServiceConnector
 import uk.gov.hmrc.ofstedformsproxy.handlers.{CygnumResponse, FormSubmissionResponseHandler, OkStatus}
 import uk.gov.hmrc.ofstedformsproxy.logging.OfstedFormProxyLogger
 import uk.gov.hmrc.ofstedformsproxy.models.OutboundCallRequest
-import uk.gov.hmrc.ofstedformsproxy.service.{AuditingService, SOAPMessageService}
+import uk.gov.hmrc.ofstedformsproxy.service.{AuditingService, FormBundlePayloadPreprocessor, SOAPMessageService}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.control.NonFatal
-import scala.xml.Elem
+import scala.xml.{Elem, PrettyPrinter}
 
 //  //TODO: Add the Auth action filter
 //  //TODO: Play Crypto Secret
@@ -65,22 +64,6 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
                                           auditingService: AuditingService,
                                           appConfig: AppConfig)
   extends BaseController with I18nSupport with HeaderValidator {
-
-  def submitForm(): Action[AnyContent] = validateAccept(contentTypeValidation).async {
-    implicit request =>
-      request.body.asXml match {
-        case Some(p) => {
-          soapService.buildFormSubmissionPayload(p) match {
-            case Right(formPayload) => {
-              logger.debug(s"Constructed Send Data payload: ", url = appConfig.cygnumURL, payload = p.toString)
-              callOutboundServiceAndHandleResult(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, formPayload), processFormSubmissionResponse)
-            }
-            case Left(t) => handleException("Failed to build the form submission SOAP XML payload", t)
-          }
-        }
-        case None => Future.successful(BadRequest("Failed to parse XML payload"))
-      }
-  }
 
   def submitFormBundle(): Action[AnyContent] = validateAccept(contentTypeValidation).async {
     implicit request =>
@@ -232,6 +215,21 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
           orElse request.body.asJson.map(_.toString)
           orElse request.body.asXml.map(_.toString)
           getOrElse("No body provided or body is not one of text, JSON or XML"))
+      Future(Ok)
+  }
+
+  def logFormBundle(): Action[AnyContent] = validateAccept(contentTypeValidation).async {
+    implicit request =>
+      logger.info("Unprocessed payload: " +
+        (request.body.asText
+          orElse request.body.asJson.map(_.toString)
+          orElse request.body.asXml.map(_.toString)
+          getOrElse("No body provided or body is not one of text, JSON or XML")))
+
+      request.body.asXml.foreach { body =>
+        logger.info("Processed payload: " + new PrettyPrinter(1000, 2).format(FormBundlePayloadPreprocessor(body)))
+      }
+
       Future(Ok)
   }
 
