@@ -33,7 +33,7 @@ object FormBundlePayloadPreprocessor {
 
   private def addIdElements(applicationForms: Seq[Elem]): Seq[Elem] =
     applicationForms.zipWithIndex.map { case (e, index) =>
-      (replaceElementValue("ParentID", (if (index === 0) 1 else 0).toString) _
+      (replaceElementValue("ParentID", (if (index === 0) 0 else 1).toString) _
         andThen replaceElementValue("FormID", (index + 1).toString) _)(e)
     }
 
