@@ -41,7 +41,7 @@ import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.control.NonFatal
-import scala.xml.{Elem, PrettyPrinter}
+import scala.xml.Elem
 
 //  //TODO: Add the Auth action filter
 //  //TODO: Play Crypto Secret

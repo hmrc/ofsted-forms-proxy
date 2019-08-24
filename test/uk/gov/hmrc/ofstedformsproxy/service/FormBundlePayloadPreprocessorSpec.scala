@@ -25,25 +25,26 @@ class FormBundlePayloadPreprocessorSpec extends WordSpec with MustMatchers {
 
   "Rewrites single ApplicationForms to have the correct FormID and ParentFormID" in {
     validate(
-      <ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo/><Bar>baz</Bar></ApplicationForm></ApplicationForms>,
+      <ApplicationForms xmlns="http://foo"><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo/><Bar>baz</Bar></ApplicationForm></ApplicationForms>,
       <ApplicationForms><ApplicationForm><FormID>1</FormID><ParentID>0</ParentID><Foo/><Bar>baz</Bar></ApplicationForm></ApplicationForms>
     )
   }
 
   "Unnests ApplicationForms and inserts the correct FormID and ParentFormID" in {
     validate(
-      <ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>1</Foo></ApplicationForm><ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>2</Foo></ApplicationForm><ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>3</Foo></ApplicationForm></ApplicationForms></ApplicationForms></ApplicationForms>,
+      <ApplicationForms xmlns="http://foo"><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>1</Foo></ApplicationForm><ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>2</Foo></ApplicationForm><ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>3</Foo></ApplicationForm></ApplicationForms></ApplicationForms></ApplicationForms>,
       <ApplicationForms><ApplicationForm><FormID>1</FormID><ParentID>0</ParentID><Foo>1</Foo></ApplicationForm><ApplicationForm><FormID>2</FormID><ParentID>1</ParentID><Foo>2</Foo></ApplicationForm><ApplicationForm><FormID>3</FormID><ParentID>1</ParentID><Foo>3</Foo></ApplicationForm></ApplicationForms>
     )
   }
 
   "Removes duplicates ApplicationForm elements" in {
     validate(
-      <ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>1</Foo></ApplicationForm><ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>1</Foo></ApplicationForm><ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>2</Foo></ApplicationForm></ApplicationForms></ApplicationForms></ApplicationForms>,
+      <ApplicationForms xmlns="http://foo"><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>1</Foo></ApplicationForm><ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>1</Foo></ApplicationForm><ApplicationForms><ApplicationForm><FormID>toBeReplaced</FormID><ParentID>thisToo</ParentID><Foo>2</Foo></ApplicationForm></ApplicationForms></ApplicationForms></ApplicationForms>,
       <ApplicationForms><ApplicationForm><FormID>1</FormID><ParentID>0</ParentID><Foo>1</Foo></ApplicationForm><ApplicationForm><FormID>2</FormID><ParentID>1</ParentID><Foo>2</Foo></ApplicationForm></ApplicationForms>
     )
   }
 
-  private def validate(in: Elem, expected: Elem) =
+  private def validate(in: Elem, expected: Elem) = {
     printer.format(FormBundlePayloadPreprocessor(in)) mustBe printer.format(expected)
+  }
 }

@@ -20,7 +20,7 @@ import cats.instances.int._
 import cats.instances.string._
 import cats.syntax.eq._
 
-import scala.xml.{Elem, Node, NodeSeq, Text}
+import scala.xml.{Elem, Node, NodeSeq, Text, TopScope}
 
 object FormBundlePayloadPreprocessor {
   def apply(applicationForms: NodeSeq): Node = {
@@ -28,8 +28,17 @@ object FormBundlePayloadPreprocessor {
       cleanIndividualApplicationForms _
         andThen removeDuplicateApplicationForms _
       andThen addIdElements _)((applicationForms \\ "ApplicationForm").collect { case e: Elem => e })
-    <ApplicationForms>{cleanedApplicationFormElements}</ApplicationForms>
+    correctNamespaces(<ApplicationForms>{cleanedApplicationFormElements}</ApplicationForms>)
   }
+
+  private def correctNamespaces(doc: Elem): Elem =
+    doc.copy(child = doc.child.map(stripNamespace))
+
+  private def stripNamespace(node: Node): Node = node match {
+    case e: Elem => e.copy(scope = TopScope, child = e.child.map(stripNamespace))
+    case _ => node
+  }
+
 
   private def addIdElements(applicationForms: Seq[Elem]): Seq[Elem] =
     applicationForms.zipWithIndex.map { case (e, index) =>
