@@ -118,7 +118,9 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     buildGetDataPayload(providerId,
       <Service>GetELSProviderDetails</Service>,
       <Providers>
-        <ProviderID>{providerId}</ProviderID>
+        <Provider>
+          <DFESNo>{providerId}</DFESNo>
+        </Provider>
       </Providers>
     )
 
