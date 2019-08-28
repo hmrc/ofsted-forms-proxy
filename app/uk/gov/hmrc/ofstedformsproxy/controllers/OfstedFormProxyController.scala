@@ -69,7 +69,7 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
     implicit request =>
       request.body.asXml match {
         case Some(p) => {
-          soapService.buildFormSubmissionPayload(p) match {
+          soapService.buildSendApplicationFormsPayload(p) match {
             case Right(formPayload) => {
               logger.debug(s"Constructed Send Data payload: ", url = appConfig.cygnumURL, payload = p.toString)
               callOutboundServiceAndHandleResult(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, formPayload), processFormSubmissionResponse)

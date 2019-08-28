@@ -49,9 +49,7 @@ trait SOAPMessageService {
 
   def buildGetURNsPayload(referenceNumberType: String): Throwable Either String
 
-  def buildFormSubmissionPayload(node: NodeSeq): Throwable Either String
-
-  def buildFormBundleSubmissionPayload(node: NodeSeq): Throwable Either String
+  def buildSendApplicationFormsPayload(node: NodeSeq): Throwable Either String
 
   def buildGetIndividualDetailsPayload(individualId: String): Throwable Either String
 
@@ -72,21 +70,20 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
   System.setProperty("javax.xml.soap.MessageFactory", "com.sun.xml.internal.messaging.saaj.soap.ver1_2.SOAPMessageFactory1_2Impl")
   System.setProperty("javax.xml.bind.JAXBContext", "com.sun.xml.internal.bind.v2.ContextFactory")
 
-  override def buildFormSubmissionPayload(node: NodeSeq): Throwable Either String =
+  override def buildSendApplicationFormsPayload(node: NodeSeq): Throwable Either String =
     for {
       xmlDocument <- readInXMLPayload(
         <SendData xmlns="http://tempuri.org/">
           <Service>SendApplicationForms</Service>
           <InputParameters>&lt;?xml version="1.0" encoding="utf-8"?&gt;&lt;Parameters&gt;&lt;DateRange&gt;&lt;StartDateTime&gt;2019-06-11T08:32:50&lt;/StartDateTime&gt;&lt;EndDateTime&gt;2019-06-11T17:32:50&lt;/EndDateTime&gt;&lt;/DateRange&gt;&lt;/Parameters&gt;</InputParameters>
-        <Data>{escapePayload(node)}</Data>
+          <Data>{escapePayload(FormBundlePayloadPreprocessor(node))}</Data>
         </SendData>
       )
       soapMessage <- createSOAPEnvelope(xmlDocument)
       signedSoapMessage <- signSOAPMessage(soapMessage, SendData)
     } yield stringifySoapMessage(signedSoapMessage)
 
-  override def buildFormBundleSubmissionPayload(node: NodeSeq): Throwable Either String =
-    buildFormSubmissionPayload(FormBundlePayloadPreprocessor(node))
+
 
   override def buildGetIndividualDetailsPayload(individualId: String): Throwable Either String =
     buildGetDataPayload(individualId,
