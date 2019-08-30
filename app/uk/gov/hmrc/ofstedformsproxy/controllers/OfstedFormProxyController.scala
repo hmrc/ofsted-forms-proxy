@@ -120,7 +120,7 @@ class OfstedFormProxyController @Inject()(outboundServiceConnector: OutboundServ
       }
 
       def getUrn(formId: String, referenceNumberType: String): Future[Either[Result, (String, String)]] =
-        soapService.buildGetURNsPayload(referenceNumberType) match {
+        soapService.buildGetURNsPayload(referenceNumberType, logger) match {
           case Right(payload) =>
             logger.debug(s"Constructed GetURNs payload: ", url = appConfig.cygnumURL, payload = payload)
             callOutboundService(OutboundCallRequest(new URL(appConfig.cygnumURL), "", Seq.empty, payload), processGetURNsResponse)

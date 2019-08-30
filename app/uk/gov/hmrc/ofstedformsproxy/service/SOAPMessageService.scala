@@ -17,7 +17,6 @@
 package uk.gov.hmrc.ofstedformsproxy.service
 
 import cats.syntax.either._
-
 import java.io._
 import java.nio.charset.StandardCharsets
 import java.security._
@@ -38,7 +37,9 @@ import javax.xml.soap._
 import org.w3c.dom.Document
 import org.xml.sax.InputSource
 import play.api.Environment
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.ofstedformsproxy.config.AppConfig
+import uk.gov.hmrc.ofstedformsproxy.logging.OfstedFormProxyLogger
 import uk.gov.hmrc.ofstedformsproxy.models.ServiceType._
 
 import scala.xml.{NodeSeq, XML}
@@ -47,7 +48,7 @@ import scala.xml.{NodeSeq, XML}
 trait SOAPMessageService {
   def buildGetURNPayload(): Throwable Either String
 
-  def buildGetURNsPayload(referenceNumberType: String): Throwable Either String
+  def buildGetURNsPayload(referenceNumberType: String, logger: OfstedFormProxyLogger)(implicit hc: HeaderCarrier): Throwable Either String
 
   def buildSendApplicationFormsPayload(node: NodeSeq): Throwable Either String
 
@@ -147,12 +148,17 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
     } yield stringifySoapMessage(signedSoapMessage)
   }
 
-  override def buildGetURNsPayload(referenceNumberType: String): Throwable Either String =
+  override def buildGetURNsPayload(referenceNumberType: String, logger: OfstedFormProxyLogger)(implicit hc: HeaderCarrier): Throwable Either String = {
+    val payload = <URNs><URN>{referenceNumberType}</URN></URNs>
+
+    logger.info(s"GetNewURN payload: ${payload}")
+
     buildGetDataPayload(
       "",
       <Service>GetNewURN</Service>,
-      <URNs><URN>{referenceNumberType}</URN></URNs>
+      payload
     )
+  }
 
   private def stringifySoapMessage(soapMessage: SOAPMessage): String = {
     val file = File.createTempFile(getClass.getSimpleName, ".tmp")
