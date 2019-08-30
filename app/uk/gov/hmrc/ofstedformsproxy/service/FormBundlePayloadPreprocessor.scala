@@ -16,6 +16,9 @@
 
 package uk.gov.hmrc.ofstedformsproxy.service
 
+import java.time.Instant
+import java.time.format.DateTimeFormatter
+
 import cats.instances.int._
 import cats.instances.string._
 import cats.syntax.eq._
@@ -23,11 +26,17 @@ import cats.syntax.eq._
 import scala.xml.{Elem, Node, NodeSeq, Text, TopScope}
 
 object FormBundlePayloadPreprocessor {
+  private val applicationFormsTag = "ApplicationForms"
+  private val applicationFormTag = "ApplicationForm"
+  private val parentIDTag = "ParentID"
+  private val formIDTag = "FormID"
+  private val createdDateTag = "CreatedDate"
+
   def apply(applicationForms: NodeSeq): Node = {
     val cleanedApplicationFormElements = (
-      cleanIndividualApplicationForms _
+      cleanApplicationFormElements _
         andThen removeDuplicateApplicationForms _
-      andThen addIdElements _)((applicationForms \\ "ApplicationForm").collect { case e: Elem => e })
+      andThen fillInAutomatedElementValues _)((applicationForms \\ applicationFormTag).collect { case e: Elem => e })
     correctNamespaces(<ApplicationForms>{cleanedApplicationFormElements}</ApplicationForms>)
   }
 
@@ -40,17 +49,27 @@ object FormBundlePayloadPreprocessor {
   }
 
 
-  private def addIdElements(applicationForms: Seq[Elem]): Seq[Elem] =
+  private def fillInAutomatedElementValues(applicationForms: Seq[Elem]): Seq[Elem] = {
+    val timestamp = DateTimeFormatter.ISO_INSTANT.format(Instant.now)
+
     applicationForms.zipWithIndex.map { case (e, index) =>
-      (replaceElementValue("ParentID", (if (index === 0) 0 else 1).toString) _
-        andThen replaceElementValue("FormID", (index + 1).toString) _)(e)
+      (replaceElementValue(parentIDTag, (if (index === 0) 0 else 1).toString) _
+        andThen replaceElementValue(formIDTag, (index + 1).toString) _
+        andThen replaceElementValue(createdDateTag, timestamp)) (e)
     }
+  }
 
   private def removeDuplicateApplicationForms(applicationForms: Seq[Elem]): Seq[Elem] =
     applicationForms.distinct
 
-  private def cleanIndividualApplicationForms(applicationForms: Seq[Elem]): Seq[Elem] =
-    applicationForms map { (removeChildElement("ApplicationForms")) }
+  private def cleanApplicationFormElements(applicationForms: Seq[Elem]): Seq[Elem] =
+    applicationForms.map(cleanApplicationForm)
+
+  private def cleanApplicationForm(form: Elem): Elem =
+    (removeChildElement(applicationFormsTag) _
+      andThen clearElementValue(parentIDTag) _
+      andThen clearElementValue(formIDTag) _
+      andThen clearElementValue(createdDateTag) _)(form)
 
   private def replaceElementValue(label: String, value: String)(form: Elem) = {
     form.copy(child = form.child.collect {
@@ -61,4 +80,6 @@ object FormBundlePayloadPreprocessor {
 
   private def removeChildElement(label: String)(form: Elem) =
     form.copy(child = form.child.filterNot(_.label === label))
+
+  private def clearElementValue(label: String)(form: Elem) = replaceElementValue(label, "")(form)
 }
