@@ -149,12 +149,12 @@ class SOAPMessageServiceImpl @Inject()(env: Environment)(appConfig: AppConfig) e
   }
 
   override def buildGetURNsPayload(referenceNumberType: String, logger: OfstedFormProxyLogger)(implicit hc: HeaderCarrier): Throwable Either String = {
-    val payload = <URNs><URN>{referenceNumberType}</URN></URNs>
+    val payload = <IDs><ID>{referenceNumberType}</ID></IDs>
 
     logger.info(s"GetNewURN payload: ${payload}")
 
     buildGetDataPayload(
-      "",
+      referenceNumberType,
       <Service>GetNewURN</Service>,
       payload
     )
